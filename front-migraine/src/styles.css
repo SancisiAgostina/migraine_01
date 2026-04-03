@@ -1,0 +1,301 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f0f8f7;
+  color: #16302e;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hospital-header {
+  width: 100%;
+  background: #fff;
+  border-bottom: 2px solid #00a99d;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  background: #00a99d;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.hospital-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.hospital-name .top {
+  font-size: 11px;
+  font-weight: 400;
+  color: #2f4745;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.hospital-name .main {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px 20px 32px;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #c8e4e2;
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 28px;
+  text-align: center;
+  color: #1a3a38;
+  line-height: 1.3;
+  word-break: normal;
+}
+
+
+.subtitle {
+  margin-top: 0;
+  margin-bottom: 28px;
+  color: #334b49;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.language-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.language-card {
+  background: #fff;
+  border: 1.5px solid #d0e8e6;
+  border-radius: 14px;
+  padding: 22px 16px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.language-card:hover {
+  border-color: #00a99d;
+  background: #f0faf9;
+}
+
+.language-card.selected {
+  border-color: #00a99d;
+  background: #e6f7f6;
+}
+
+.language-flag {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.language-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a3a38;
+}
+
+.language-native {
+  font-size: 12px;
+  color: #666;
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.primary-button,
+.secondary-button,
+.answer-button {
+  border: none;
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.primary-button {
+  width: 100%;
+  background: #00a99d;
+  color: white;
+  font-weight: 600;
+}
+
+.primary-button:hover {
+  background: #008f84;
+}
+
+.secondary-button {
+  width: 100%;
+  background: none;
+  border: 1.5px solid #00a99d;
+  color: #00a99d;
+}
+
+.secondary-button:hover {
+  background: #f0faf9;
+}
+
+.progress-bar-wrap {
+  width: 100%;
+  background: #d0e8e6;
+  border-radius: 99px;
+  height: 6px;
+  margin-bottom: 14px;
+}
+
+.progress-bar-fill {
+  background: #00a99d;
+  height: 6px;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.progress {
+  font-size: 12px;
+  color: #46615f;
+  text-align: right;
+  margin-bottom: 18px;
+}
+
+.question-text {
+  font-size: 20px;
+  color: #1a3a38;
+  margin-bottom: 22px;
+  line-height: 1.70;
+}
+
+.answer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.answer-button {
+  width: 100%;
+  background: #f7fdfc;
+  border: 1.5px solid #c8e4e2;
+  color: #1a3a38;
+  text-align: left;
+  font-weight: 500;
+}
+
+.answer-button:hover {
+  border-color: #00a99d;
+  background: #f0faf9;
+}
+
+.result-box {
+  background: #fff;
+  border: 1px solid #c8e4e2;
+  border-radius: 16px;
+  padding: 24px 20px;
+  margin-bottom: 20px;
+}
+
+.result-badge {
+  display: inline-flex;
+  border-radius: 99px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.badge-high {
+  background: #fde8e8;
+  color: #a32d2d;
+}
+
+.badge-med {
+  background: #faeeda;
+  color: #854f0b;
+}
+
+.badge-low {
+  background: #eaf3de;
+  color: #3b6d11;
+}
+
+.result-diagnosis {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a3a38;
+  margin-bottom: 10px;
+}
+
+.result-description {
+  font-size: 14px;
+  color: #2f4745;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #00a99d;
+  margin-bottom: 10px;
+}
+
+.answers-box {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.disclaimer {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 16px;
+  padding: 12px;
+  background: #f7fdfc;
+  border-radius: 8px;
+  border: 1px solid #d0e8e6;
+}
