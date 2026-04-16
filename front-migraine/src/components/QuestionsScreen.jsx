@@ -3,6 +3,148 @@ import { COLORS } from "../styles/colors";
 import { QUESTIONS } from "../data/questions";
 import { UI } from "../data/uiText";
 
+const BUTTON_TRANSITION = "transform 0.18s ease, box-shadow 0.18s ease";
+
+function getButtonAnimation(level = "medium") {
+    if (level === "soft") {
+        return {
+          hoverScale: 1.01,
+          downScale: 0.995,
+          hoverShadow: "0 4px 10px rgba(0,0,0,0.05)",
+          downShadow: "0 2px 6px rgba(0,0,0,0.04)",
+        };
+      }
+
+  return {
+    hoverScale: 1.02,
+    downScale: 0.98,
+    hoverShadow: "0 8px 18px rgba(0,0,0,0.08)",
+    downShadow: "0 4px 12px rgba(0,0,0,0.06)",
+  };
+}
+
+function getAnimatedButtonHandlers(level = "medium") {
+  const config = getButtonAnimation(level);
+
+  return {
+    onMouseEnter: (e) => {
+      e.currentTarget.style.transform = `scale(${config.hoverScale})`;
+      e.currentTarget.style.boxShadow = config.hoverShadow;
+    },
+    onMouseLeave: (e) => {
+      e.currentTarget.style.transform = "scale(1)";
+      e.currentTarget.style.boxShadow = "none";
+    },
+    onMouseDown: (e) => {
+      e.currentTarget.style.transform = `scale(${config.downScale})`;
+      e.currentTarget.style.boxShadow = config.downShadow;
+    },
+    onMouseUp: (e) => {
+      e.currentTarget.style.transform = `scale(${config.hoverScale})`;
+      e.currentTarget.style.boxShadow = config.hoverShadow;
+    },
+  };
+}
+
+function getIntensityStyles(value) {
+  if (value === "mild") {
+    return {
+      bg: "#EAF5EE",
+      border: "#2E7D4F",
+      text: "#2E7D4F",
+      glowHover: "0 0 0 3px rgba(46,125,79,0.12), 0 10px 24px rgba(46,125,79,0.18)",
+      glowDown: "0 0 0 3px rgba(46,125,79,0.10), 0 6px 16px rgba(46,125,79,0.14)",
+    };
+  }
+
+  if (value === "moderate") {
+    return {
+      bg: "#FEF5E7",
+      border: "#B7600A",
+      text: "#B7600A",
+      glowHover: "0 0 0 3px rgba(183,96,10,0.12), 0 10px 24px rgba(183,96,10,0.18)",
+      glowDown: "0 0 0 3px rgba(183,96,10,0.10), 0 6px 16px rgba(183,96,10,0.14)",
+    };
+  }
+
+  return {
+    bg: "#FEF0EE",
+    border: "#C0392B",
+    text: "#C0392B",
+    glowHover: "0 0 0 3px rgba(192,57,43,0.12), 0 10px 24px rgba(192,57,43,0.18)",
+    glowDown: "0 0 0 3px rgba(192,57,43,0.10), 0 6px 16px rgba(192,57,43,0.14)",
+  };
+}
+
+function getIntensityButtonHandlers(value) {
+  const styles = getIntensityStyles(value);
+
+  return {
+    onMouseEnter: (e) => {
+      e.currentTarget.style.transform = "scale(1.05)";
+      e.currentTarget.style.boxShadow = styles.glowHover;
+    },
+    onMouseLeave: (e) => {
+      e.currentTarget.style.transform = "scale(1)";
+      e.currentTarget.style.boxShadow = "none";
+    },
+    onMouseDown: (e) => {
+      e.currentTarget.style.transform = "scale(0.97)";
+      e.currentTarget.style.boxShadow = styles.glowDown;
+    },
+    onMouseUp: (e) => {
+      e.currentTarget.style.transform = "scale(1.05)";
+      e.currentTarget.style.boxShadow = styles.glowHover;
+    },
+  };
+}
+
+function getBaseButtonStyle() {
+  return {
+    borderRadius: 12,
+    padding: "15px 16px",
+    cursor: "pointer",
+    fontSize: 15,
+    transition: BUTTON_TRANSITION,
+    willChange: "transform, box-shadow",
+  };
+}
+
+function getOptionButtonStyle() {
+  return {
+    ...getBaseButtonStyle(),
+    background: COLORS.bg,
+    border: `1.5px solid ${COLORS.border}`,
+    textAlign: "left",
+    color: COLORS.text,
+    fontWeight: 500,
+  };
+}
+
+function getActionButtonStyle({ primary = false } = {}) {
+  return {
+    ...getBaseButtonStyle(),
+    background: primary ? COLORS.teal : COLORS.bg,
+    color: primary ? "#fff" : COLORS.text,
+    border: primary ? "none" : `1.5px solid ${COLORS.border}`,
+    textAlign: "center",
+    fontWeight: primary ? 600 : 500,
+  };
+}
+
+function getBackButtonStyle() {
+  return {
+    ...getBaseButtonStyle(),
+    flex: "0 0 auto",
+    padding: "14px 20px",
+    background: COLORS.white,
+    border: `1.5px solid ${COLORS.border}`,
+    color: COLORS.textMuted,
+    fontSize: 14,
+    fontWeight: 500,
+  };
+}
+
 export default function QuestionsScreen({ lang, onComplete, onBack }) {
   const ui = UI[lang];
   const allQuestions = QUESTIONS[lang];
@@ -11,14 +153,14 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
   const [current, setCurrent] = useState(0);
   const [textValue, setTextValue] = useState("");
 
-  const visibleQuestions = allQuestions.filter((q) => {
-    if (!q.showIf) return true;
-    return q.showIf(answers);
+  const visibleQuestions = allQuestions.filter((question) => {
+    if (!question.showIf) return true;
+    return question.showIf(answers);
   });
 
   const q = visibleQuestions[current];
   const total = visibleQuestions.length;
-  const progress = Math.round(((current + 1) / total) * 100);
+  const progress = total > 0 ? Math.round(((current + 1) / total) * 100) : 0;
   const isLast = current === total - 1;
 
   useEffect(() => {
@@ -29,7 +171,7 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
     } else {
       setTextValue("");
     }
-  }, [current, q, answers]);
+  }, [q, answers]);
 
   function saveAnswer(value) {
     const updatedAnswers = {
@@ -42,40 +184,8 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
     if (isLast) {
       onComplete(updatedAnswers);
     } else {
-      setCurrent((c) => c + 1);
+      setCurrent((prev) => prev + 1);
     }
-  }
-
-  function handleBinaryAnswer(value) {
-    saveAnswer(value);
-  }
-
-  function handleMultipleChoiceAnswer(value) {
-    saveAnswer(value);
-  }
-
-  function getIntensityStyles(value) {
-    if (value === "mild") {
-      return {
-        bg: "#EAF5EE",
-        border: "#2E7D4F",
-        text: "#2E7D4F",
-      };
-    }
-  
-    if (value === "moderate") {
-      return {
-        bg: "#FEF5E7",
-        border: "#B7600A",
-        text: "#B7600A",
-      };
-    }
-  
-    return {
-      bg: "#FEF0EE",
-      border: "#C0392B",
-      text: "#C0392B",
-    };
   }
 
   function handleTextContinue() {
@@ -96,7 +206,7 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
     if (current === 0) {
       onBack();
     } else {
-      setCurrent((c) => c - 1);
+      setCurrent((prev) => prev - 1);
     }
   }
 
@@ -177,35 +287,17 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
         {q.type === "binary" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button
-              onClick={() => handleBinaryAnswer(true)}
-              style={{
-                background: COLORS.bg,
-                border: `1.5px solid ${COLORS.border}`,
-                borderRadius: 12,
-                padding: "15px 16px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontSize: 15,
-                color: COLORS.text,
-                fontWeight: 500,
-              }}
+              onClick={() => saveAnswer(true)}
+              {...getAnimatedButtonHandlers("soft")}
+              style={getOptionButtonStyle()}
             >
               {lang === "es" ? "Sí" : "Yes"}
             </button>
 
             <button
-              onClick={() => handleBinaryAnswer(false)}
-              style={{
-                background: COLORS.bg,
-                border: `1.5px solid ${COLORS.border}`,
-                borderRadius: 12,
-                padding: "15px 16px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontSize: 15,
-                color: COLORS.text,
-                fontWeight: 500,
-              }}
+              onClick={() => saveAnswer(false)}
+              {...getAnimatedButtonHandlers("soft")}
+              style={getOptionButtonStyle()}
             >
               {lang === "es" ? "No" : "No"}
             </button>
@@ -217,18 +309,9 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
             {q.options.map((option) => (
               <button
                 key={option.value}
-                onClick={() => handleMultipleChoiceAnswer(option.value)}
-                style={{
-                  background: COLORS.bg,
-                  border: `1.5px solid ${COLORS.border}`,
-                  borderRadius: 12,
-                  padding: "15px 16px",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: 15,
-                  color: COLORS.text,
-                  fontWeight: 500,
-                }}
+                onClick={() => saveAnswer(option.value)}
+                {...getAnimatedButtonHandlers("soft")}
+                style={getOptionButtonStyle()}
               >
                 {option.label}
               </button>
@@ -236,72 +319,72 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
           </div>
         )}
 
-{q.type === "intensity_scale" && (
-  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
-        gap: 10,
-      }}
-    >
-      {q.options.map((option) => {
-        const styles = getIntensityStyles(option.value);
+        {q.type === "intensity_scale" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 10,
+              }}
+            >
+              {q.options.map((option) => {
+                const styles = getIntensityStyles(option.value);
 
-        return (
-          <button
-            key={option.value}
-            onClick={() => handleMultipleChoiceAnswer(option.value)}
-            style={{
-              background: styles.bg,
-              border: `2px solid ${styles.border}`,
-              borderRadius: 14,
-              padding: "18px 14px",
-              cursor: "pointer",
-              fontSize: 15,
-              color: styles.text,
-              fontWeight: 700,
-              textAlign: "center",
-            }}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => saveAnswer(option.value)}
+                    {...getIntensityButtonHandlers(option.value)}
+                    style={{
+                      ...getBaseButtonStyle(),
+                      background: styles.bg,
+                      border: `2px solid ${styles.border}`,
+                      borderRadius: 14,
+                      padding: "18px 14px",
+                      color: styles.text,
+                      fontWeight: 700,
+                      textAlign: "center",
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
 
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
-        gap: 10,
-        alignItems: "center",
-      }}
-    >
-      <div
-        style={{
-          height: 8,
-          borderRadius: 999,
-          background: "#2E7D4F",
-        }}
-      />
-      <div
-        style={{
-          height: 8,
-          borderRadius: 999,
-          background: "#B7600A",
-        }}
-      />
-      <div
-        style={{
-          height: 8,
-          borderRadius: 999,
-          background: "#C0392B",
-        }}
-      />
-    </div>
-  </div>
-)}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  height: 8,
+                  borderRadius: 999,
+                  background: "#2E7D4F",
+                }}
+              />
+              <div
+                style={{
+                  height: 8,
+                  borderRadius: 999,
+                  background: "#B7600A",
+                }}
+              />
+              <div
+                style={{
+                  height: 8,
+                  borderRadius: 999,
+                  background: "#C0392B",
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {q.type === "text" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -342,36 +425,22 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <button
-                onClick={handleTextContinue}
-                style={{
-                  background: COLORS.teal,
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 12,
-                  padding: "15px 16px",
-                  textAlign: "center",
-                  cursor: "pointer",
-                  fontSize: 15,
-                  fontWeight: 600,
-                }}
-              >
-                {isLast ? (lang === "es" ? "Ver resultado" : "See result") : ui.next}
-              </button>
+            <button
+  onClick={handleTextContinue}
+  {...getAnimatedButtonHandlers("medium")}
+  style={{
+    ...getActionButtonStyle({ primary: true }),
+    transition: "transform 0.18s ease, box-shadow 0.18s ease",
+    willChange: "transform, box-shadow",
+  }}
+>
+  {isLast ? (lang === "es" ? "Ver resultado" : "See result") : ui.next}
+</button>
 
               <button
                 onClick={handleSkipText}
-                style={{
-                  background: COLORS.bg,
-                  border: `1.5px solid ${COLORS.border}`,
-                  borderRadius: 12,
-                  padding: "15px 16px",
-                  textAlign: "center",
-                  cursor: "pointer",
-                  fontSize: 15,
-                  color: COLORS.text,
-                  fontWeight: 500,
-                }}
+                {...getAnimatedButtonHandlers("medium")}
+                style={getActionButtonStyle()}
               >
                 {lang === "es" ? "Omitir" : "Skip"}
               </button>
@@ -383,17 +452,8 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
       <div style={{ display: "flex", gap: 10 }}>
         <button
           onClick={goBack}
-          style={{
-            flex: "0 0 auto",
-            padding: "14px 20px",
-            background: COLORS.white,
-            border: `1.5px solid ${COLORS.border}`,
-            borderRadius: 12,
-            color: COLORS.textMuted,
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
+          {...getAnimatedButtonHandlers("medium")}
+          style={getBackButtonStyle()}
         >
           ← {ui.back}
         </button>

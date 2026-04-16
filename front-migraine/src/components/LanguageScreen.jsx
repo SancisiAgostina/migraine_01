@@ -98,24 +98,44 @@ export default function LanguageScreen({ onSelect }) {
       </div>
 
       <button
-        disabled={!selected}
-        onClick={() => onSelect(selected)}
-        style={{
-          width: "100%",
-          padding: "15px",
-          background: selected ? COLORS.teal : COLORS.tealMid,
-          color: "#fff",
-          border: "none",
-          borderRadius: 12,
-          fontSize: 16,
-          fontWeight: 600,
-          cursor: selected ? "pointer" : "default",
-          transition: "background 0.15s",
-          letterSpacing: "0.2px",
-        }}
-      >
-        {selected === "es" ? "Continuar →" : "Continue →"}
-      </button>
+  disabled={!selected}
+  onClick={() => onSelect(selected)}
+  onMouseEnter={(e) => {
+    if (!selected) return;
+    e.currentTarget.style.transform = "scale(1.02)";
+    e.currentTarget.style.boxShadow = "0 8px 18px rgba(0,0,0,0.08)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "scale(1)";
+    e.currentTarget.style.boxShadow = "none";
+  }}
+  onMouseDown={(e) => {
+    if (!selected) return;
+    e.currentTarget.style.transform = "scale(0.98)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)";
+  }}
+  onMouseUp={(e) => {
+    if (!selected) return;
+    e.currentTarget.style.transform = "scale(1.02)";
+    e.currentTarget.style.boxShadow = "0 8px 18px rgba(0,0,0,0.08)";
+  }}
+  style={{
+    width: "100%",
+    padding: "15px",
+    background: selected ? COLORS.teal : COLORS.tealMid,
+    color: "#fff",
+    border: "none",
+    borderRadius: 12,
+    fontSize: 16,
+    fontWeight: 600,
+    cursor: selected ? "pointer" : "default",
+    transition: "transform 0.18s ease, box-shadow 0.18s ease, background 0.15s ease",
+    letterSpacing: "0.2px",
+    willChange: "transform, box-shadow",
+  }}
+>
+  {selected === "es" ? "Continuar →" : "Continue →"}
+</button>
     </div>
   );
 }

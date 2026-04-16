@@ -259,6 +259,37 @@ export default function ResultScreen({ lang, apiResult, onRestart }) {
   const title = patientView?.result_title || ui.incTitle;
   const desc = patientView?.result_description || ui.incDesc;
   const recs = patientView?.next_steps || ui.incRecs;
+  function getRestartButtonAnimation() {
+    return {
+      hoverScale: 1.02,
+      downScale: 0.98,
+      hoverShadow: "0 8px 18px rgba(0,0,0,0.08)",
+      downShadow: "0 4px 12px rgba(0,0,0,0.06)",
+    };
+  }
+  
+  function getRestartButtonHandlers() {
+    const config = getRestartButtonAnimation();
+  
+    return {
+      onMouseEnter: (e) => {
+        e.currentTarget.style.transform = `scale(${config.hoverScale})`;
+        e.currentTarget.style.boxShadow = config.hoverShadow;
+      },
+      onMouseLeave: (e) => {
+        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.boxShadow = "none";
+      },
+      onMouseDown: (e) => {
+        e.currentTarget.style.transform = `scale(${config.downScale})`;
+        e.currentTarget.style.boxShadow = config.downShadow;
+      },
+      onMouseUp: (e) => {
+        e.currentTarget.style.transform = `scale(${config.hoverScale})`;
+        e.currentTarget.style.boxShadow = config.hoverShadow;
+      },
+    };
+  }
 
   return (
     <div style={{ padding: "24px 24px 40px", maxWidth: 520, margin: "0 auto" }}>
@@ -384,22 +415,25 @@ export default function ResultScreen({ lang, apiResult, onRestart }) {
       </div>
 
       <button
-        onClick={onRestart}
-        style={{
-          width: "100%",
-          padding: "14px",
-          background: COLORS.white,
-          border: `1.5px solid ${COLORS.teal}`,
-          borderRadius: 12,
-          color: COLORS.teal,
-          fontSize: 15,
-          fontWeight: 600,
-          cursor: "pointer",
-          outline: "none",
-        }}
-      >
-        {ui.restart}
-      </button>
+  onClick={onRestart}
+  {...getRestartButtonHandlers()}
+  style={{
+    width: "100%",
+    padding: "14px",
+    background: COLORS.white,
+    border: `1.5px solid ${COLORS.teal}`,
+    borderRadius: 12,
+    color: COLORS.teal,
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: "pointer",
+    outline: "none",
+    transition: "transform 0.18s ease, box-shadow 0.18s ease",
+    willChange: "transform, box-shadow",
+  }}
+>
+  {ui.restart}
+</button>
     </div>
   );
 }
