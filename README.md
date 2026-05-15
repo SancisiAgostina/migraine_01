@@ -75,21 +75,22 @@ migraine_01/
 │   │
 │   ├── package.json
 │   └── vite.config.js
+````
 
-How It Works
+# How It Works
 
 The application collects the user's answers through a guided questionnaire.
 
 The front end sends the collected answers to the Flask backend using the /diagnose endpoint. The backend evaluates the answers using a decision-tree structure and returns a diagnosis key. The front end then displays the corresponding result depending on the selected view and language.
 
-API Endpoints
+## API Endpoints
 GET /
 Returns a basic confirmation message that the API is running.
 
 POST /diagnose
 Receives the user's answers and returns a screening result.
 
-Current Development Progress
+### Current Development Progress
 
 Since the last review, the project has been improved in several areas:
 
@@ -104,7 +105,7 @@ Tested the connection between the React front end and the Flask backend.
 Added clearer structure to support future improvements.
 Current Development Focus
 
-The current focus is on improving:
+###The current focus is on improving:
 
 Code clarity.
 Internal documentation.
@@ -113,7 +114,7 @@ Clinical result presentation.
 Stability before adding larger new features.
 Future Improvements
 
-Possible next steps include:
+###Possible next steps include:
 
 Adding more detailed internal comments.
 Improving the README as the project evolves.
