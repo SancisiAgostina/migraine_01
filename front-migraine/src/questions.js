@@ -70,22 +70,22 @@ const questions = [
   {
     key: "worse_activity",
     text: {
-      en: "Did walking, moving, or climbing stairs make it worse?",
-      es: "¿Caminar, moverte o subir escaleras lo empeoraba?"
+      en: "Has a headache limited your activities for a day or more in the last 3 months?",
+      es: "¿ha el dolor de cabeza limitado tus actividades por un dia o más en los últimos tres meses?"
     }
   },
   {
     key: "nausea",
     text: {
-      en: "Did you feel nauseous or like vomiting?",
-      es: "¿Tuviste náuseas o ganas de vomitar?"
+      en: "Are you nauseated or sick to your stomach when you have a headache?",
+      es: "¿Sentiste náuseas o ganas de vomitar cuando te duele la cabeza?"
     }
   },
   {
     key: "light_sensitive",
     text: {
-      en: "Did light bother you?",
-      es: "¿La luz te molestaba?"
+      en: "Does light bother you when you have a headache?",
+      es: "¿La luz te molesta cuando te duele la cabeza?"
     }
   },
   {
