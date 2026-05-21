@@ -143,6 +143,49 @@ function DoctorPanel({ lang, doctorView }) {
                 marginBottom: 8,
               }}
             >
+              {doctorLang === "es" ? "Resultado para el profesional" : "Clinician result"}
+            </p>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <span
+                style={{
+                  background: COLORS.tealLight,
+                  color: COLORS.tealDark,
+                  borderRadius: 8,
+                  padding: "5px 11px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}
+              >
+                {doctorView.diagnosis_label || doctorView.diagnosis_key}
+              </span>
+
+              <span
+                style={{
+                  background: COLORS.bg,
+                  color: COLORS.textMuted,
+                  borderRadius: 8,
+                  padding: "5px 11px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: `1px solid ${COLORS.border}`,
+                }}
+              >
+                {doctorView.assessment_mode === "basic_lipton"
+                  ? ui.basicLiptonMode
+                  : ui.completeAssessmentMode}
+              </span>
+            </div>
+          </div>
+          <div>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: COLORS.text,
+                marginBottom: 8,
+              }}
+            >
               {doctorLang === "es" ? "Screening Lipton" : "Lipton screening"}
             </p>
 
@@ -337,7 +380,7 @@ export default function ResultScreen({ lang, apiResult, onRestart }) {
                 letterSpacing: "0.2px",
               }}
             >
-              {lang === "es" ? "Resultado" : "Result"}
+              {lang === "es" ? "Resumen" : "Summary"}
             </div>
 
             <p style={{ fontSize: 16, fontWeight: 700, color: COLORS.text, lineHeight: 1.3 }}>

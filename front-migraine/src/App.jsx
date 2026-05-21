@@ -9,7 +9,6 @@ import { sendAnswersToBackend } from "./services/diagnosisApi";
 export default function App() {
   const [screen, setScreen] = useState("lang");
   const [lang, setLang] = useState("en");
-  const [answers, setAnswers] = useState({});
   const [apiResult, setApiResult] = useState(null);
 
   function handleLangSelect(selectedLang) {
@@ -18,8 +17,6 @@ export default function App() {
   }
 
   async function handleComplete(ans) {
-    setAnswers(ans);
-
     try {
       const result = await sendAnswersToBackend(ans, lang);
 console.log("API RESULT:", result);
@@ -33,7 +30,6 @@ setApiResult(result);
   }
 
   function handleRestart() {
-    setAnswers({});
     setApiResult(null);
     setLang("en");
     setScreen("lang");

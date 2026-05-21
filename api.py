@@ -87,92 +87,52 @@ def compute_lipton_score(answers):
     return score
 
 
-def build_patient_view(diagnosis_key, language="en"):
+def build_patient_view(language="en"):
     is_spanish = language == "es"
-
-    if diagnosis_key == "dx_migraine_aura":
-        if is_spanish:
-            return {
-                "result_title": "Posible migraña con aura",
-                "result_description": "Sus respuestas podrían ser compatibles con migraña con aura.",
-                "next_steps": [
-                    "Por favor, consulte estos síntomas con un médico.",
-                    "Registre cuándo aparecen los dolores de cabeza y qué síntomas los acompañan.",
-                    "Busque atención médica urgente si aparecen signos de alarma."
-                ]
-            }
-        return {
-            "result_title": "Possible migraine with aura",
-            "result_description": "Your answers may be consistent with migraine with aura.",
-            "next_steps": [
-                "Please discuss these symptoms with a doctor.",
-                "Track when your headaches happen and what symptoms appear.",
-                "Seek urgent medical care if warning signs appear."
-            ]
-        }
-
-    if diagnosis_key == "dx_migraine_no_aura":
-        if is_spanish:
-            return {
-                "result_title": "Posible migraña sin aura",
-                "result_description": "Sus respuestas podrían ser compatibles con migraña sin aura.",
-                "next_steps": [
-                    "Por favor, consulte estos síntomas con un médico.",
-                    "Registre cuándo aparecen los dolores de cabeza y qué síntomas los acompañan.",
-                    "Descanse en un ambiente oscuro y tranquilo durante los episodios si lo necesita."
-                ]
-            }
-        return {
-            "result_title": "Possible migraine without aura",
-            "result_description": "Your answers may be consistent with migraine without aura.",
-            "next_steps": [
-                "Please discuss these symptoms with a doctor.",
-                "Track when your headaches happen and what symptoms appear.",
-                "Rest in a quiet, dark environment during episodes if needed."
-            ]
-        }
-
-    if diagnosis_key == "dx_tension":
-        if is_spanish:
-            return {
-                "result_title": "Posible cefalea tensional",
-                "result_description": "Sus respuestas podrían ser más compatibles con una cefalea tensional.",
-                "next_steps": [
-                    "Por favor, consulte estos síntomas con un médico.",
-                    "Observe con qué frecuencia aparecen los dolores de cabeza.",
-                    "Registre si el estrés, la postura o el sueño afectan sus síntomas."
-                ]
-            }
-        return {
-            "result_title": "Possible tension-type headache",
-            "result_description": "Your answers may be more consistent with a tension-type headache.",
-            "next_steps": [
-                "Please discuss these symptoms with a doctor.",
-                "Monitor how often the headaches happen.",
-                "Track whether stress, posture, or sleep affect your symptoms."
-            ]
-        }
 
     if is_spanish:
         return {
-            "result_title": "Resultado no concluyente",
-            "result_description": "No hay suficiente información para sugerir un resultado claro.",
+            "result_title": "Gracias por completar el cuestionario",
+            "result_description": "Tus respuestas fueron registradas para que las revise un profesional de salud.",
             "next_steps": [
-                "Por favor, revise sus síntomas con un médico.",
-                "Complete nuevamente el cuestionario si es necesario.",
-                "Busque atención médica urgente si aparecen signos de alarma."
+                "Revisá los resultados con un profesional de salud calificado.",
+                "Compartí detalles sobre frecuencia, duración, desencadenantes o medicación utilizada.",
+                "Buscá atención médica urgente si los síntomas son repentinos, intensos o inusuales."
             ]
         }
 
     return {
-        "result_title": "Inconclusive result",
-        "result_description": "There is not enough information to suggest a clear result.",
+        "result_title": "Thank you for completing the questionnaire",
+        "result_description": "Your answers were recorded for healthcare professional review.",
         "next_steps": [
-            "Please review your symptoms with a doctor.",
-            "Complete the questionnaire again if needed.",
-            "Seek urgent care if warning signs appear."
+            "Review the results with a qualified healthcare professional.",
+            "Share any details about frequency, duration, triggers, or medication use.",
+            "Seek urgent medical care if symptoms are sudden, severe, or unusual."
         ]
     }
+
+
+def get_diagnosis_label(diagnosis_key, language="en"):
+    labels = {
+        "en": {
+            "dx_migraine_aura": "Compatible with migraine with aura",
+            "dx_migraine_no_aura": "Compatible with migraine without aura",
+            "dx_tension": "Compatible with tension-type headache",
+            "dx_inconclusive": "Inconclusive",
+            "lipton_positive": "Positive Lipton screening",
+            "lipton_negative": "Non-positive Lipton screening"
+        },
+        "es": {
+            "dx_migraine_aura": "Compatible con migraña con aura",
+            "dx_migraine_no_aura": "Compatible con migraña sin aura",
+            "dx_tension": "Compatible con cefalea tensional",
+            "dx_inconclusive": "No concluyente",
+            "lipton_positive": "Screening Lipton positivo",
+            "lipton_negative": "Screening Lipton no positivo"
+        }
+    }
+
+    return labels.get(language, labels["en"]).get(diagnosis_key, diagnosis_key)
 
 
 @app.route("/diagnose", methods=["POST", "OPTIONS"])
@@ -194,6 +154,7 @@ def diagnose():
             language = "en"
 
         additional_notes = str(answers.get("additional_notes", "")).strip()
+        assessment_mode = answers.get("assessment_mode", "complete")
 
         side_data = normalize_side(answers.get("pain_side"))
         answers["unilateral"] = side_data["unilateral"]
@@ -203,19 +164,25 @@ def diagnose():
         answers["mild_moderate"] = intensity_data["mild_moderate"]
         answers["moderate_severe"] = intensity_data["moderate_severe"]
 
-        tree_root = build_tree()
-        diagnosis_key = tree_root.evaluate(answers)
-
-        if not diagnosis_key:
-            diagnosis_key = "dx_inconclusive"
-
         lipton_score = compute_lipton_score(answers)
         lipton_positive = lipton_score >= 2
 
-        patient_view = build_patient_view(diagnosis_key, language)
+        if assessment_mode == "basic_lipton":
+            diagnosis_key = "lipton_positive" if lipton_positive else "lipton_negative"
+        else:
+            assessment_mode = "complete"
+            tree_root = build_tree()
+            diagnosis_key = tree_root.evaluate(answers)
+
+            if not diagnosis_key:
+                diagnosis_key = "dx_inconclusive"
+
+        patient_view = build_patient_view(language)
 
         doctor_view = {
+            "assessment_mode": assessment_mode,
             "diagnosis_key": diagnosis_key,
+            "diagnosis_label": get_diagnosis_label(diagnosis_key, language),
             "lipton_score": lipton_score,
             "lipton_positive": lipton_positive,
             "answers_summary": {
@@ -239,6 +206,7 @@ def diagnose():
 
         return jsonify({
             "diagnosis_key": diagnosis_key,
+            "assessment_mode": assessment_mode,
             "patient_view": patient_view,
             "doctor_view": doctor_view
         }), 200

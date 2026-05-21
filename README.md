@@ -4,6 +4,16 @@ This project is a bilingual migraine screening application designed to help orga
 
 The app uses decision-tree based logic to guide the user through a structured set of questions and generate a screening result. It is not intended to provide a medical diagnosis, but rather to support symptom organization and improve communication between patients and healthcare professionals.
 
+## Current workflow updates
+
+- The first three Lipton / ID Migraine screening questions are required.
+- After the first three questions, the patient can choose whether to answer additional questions for a more complete physician review.
+- If the patient declines additional questions, the backend returns a basic Lipton-only result for the physician view.
+- Patient-facing results stay neutral and do not display diagnosis labels.
+- Diagnostic details are reserved for the physician view.
+- The final notes field supports typed notes and optional browser-based voice input when available. Audio files are not stored.
+- A safe chatbot integration plan is documented in `docs/chatbot-plan.md`.
+
 ## Main Goal
 
 The main goal of this project is to create a clear, accessible, and clinically useful screening support tool for migraine and tension-type headache symptoms.

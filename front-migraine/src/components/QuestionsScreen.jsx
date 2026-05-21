@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { COLORS } from "../styles/colors";
 import { QUESTIONS } from "../data/questions";
 import { UI } from "../data/uiText";
@@ -6,14 +6,14 @@ import { UI } from "../data/uiText";
 const BUTTON_TRANSITION = "transform 0.18s ease, box-shadow 0.18s ease";
 
 function getButtonAnimation(level = "medium") {
-    if (level === "soft") {
-        return {
-          hoverScale: 1.01,
-          downScale: 0.995,
-          hoverShadow: "0 4px 10px rgba(0,0,0,0.05)",
-          downShadow: "0 2px 6px rgba(0,0,0,0.04)",
-        };
-      }
+  if (level === "soft") {
+    return {
+      hoverScale: 1.01,
+      downScale: 0.995,
+      hoverShadow: "0 4px 10px rgba(0,0,0,0.05)",
+      downShadow: "0 2px 6px rgba(0,0,0,0.04)",
+    };
+  }
 
   return {
     hoverScale: 1.02,
@@ -145,33 +145,72 @@ function getBackButtonStyle() {
   };
 }
 
+function getVisibleQuestions(allQuestions, answers) {
+  return allQuestions.filter((question) => {
+    if (!question.showIf) return true;
+    return question.showIf(answers);
+  });
+}
+
+function getStepInfo(q, visibleQuestions, current, ui) {
+  if (q.section === "transition") {
+    return {
+      label: ui.additionalPromptLabel,
+      progress: 100,
+      segments: 0,
+      activeSegment: -1,
+    };
+  }
+
+  const sectionQuestions = visibleQuestions.filter((question) => question.section === q.section);
+  const sectionIndex = sectionQuestions.findIndex((question) => question.id === q.id);
+  const sectionTotal = sectionQuestions.length;
+  const safeCurrent = sectionIndex >= 0 ? sectionIndex + 1 : current + 1;
+  const progress = sectionTotal > 0 ? Math.round((safeCurrent / sectionTotal) * 100) : 0;
+
+  return {
+    label: ui.question(safeCurrent, sectionTotal),
+    progress,
+    segments: sectionTotal,
+    activeSegment: safeCurrent - 1,
+  };
+}
+
 export default function QuestionsScreen({ lang, onComplete, onBack }) {
   const ui = UI[lang];
   const allQuestions = QUESTIONS[lang];
 
   const [answers, setAnswers] = useState({});
   const [current, setCurrent] = useState(0);
-  const [textValue, setTextValue] = useState("");
+  const [textValues, setTextValues] = useState({});
+  const [voiceStatus, setVoiceStatus] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
 
-  const visibleQuestions = allQuestions.filter((question) => {
-    if (!question.showIf) return true;
-    return question.showIf(answers);
-  });
+  const visibleQuestions = useMemo(
+    () => getVisibleQuestions(allQuestions, answers),
+    [allQuestions, answers]
+  );
 
   const q = visibleQuestions[current];
-  const total = visibleQuestions.length;
-  const progress = total > 0 ? Math.round(((current + 1) / total) * 100) : 0;
-  const isLast = current === total - 1;
+  const isLast = current === visibleQuestions.length - 1;
+  const stepInfo = q ? getStepInfo(q, visibleQuestions, current, ui) : null;
+  const textValue = q?.type === "text" ? textValues[q.id] || "" : "";
 
   useEffect(() => {
-    if (!q) return;
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
 
-    if (q.type === "text") {
-      setTextValue(answers[q.id] || "");
-    } else {
-      setTextValue("");
-    }
-  }, [q, answers]);
+  function completeWithAnswers(updatedAnswers, mode) {
+    onComplete({
+      ...updatedAnswers,
+      assessment_mode: mode,
+    });
+  }
 
   function saveAnswer(value) {
     const updatedAnswers = {
@@ -179,10 +218,26 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
       [q.id]: value,
     };
 
+    if (q.id === "wants_additional_questions") {
+      if (value === false) {
+        setAnswers(updatedAnswers);
+        completeWithAnswers(updatedAnswers, "basic_lipton");
+        return;
+      }
+
+      const completeAnswers = {
+        ...updatedAnswers,
+        assessment_mode: "complete",
+      };
+      setAnswers(completeAnswers);
+      setCurrent((prev) => prev + 1);
+      return;
+    }
+
     setAnswers(updatedAnswers);
 
     if (isLast) {
-      onComplete(updatedAnswers);
+      completeWithAnswers(updatedAnswers, updatedAnswers.assessment_mode || "complete");
     } else {
       setCurrent((prev) => prev + 1);
     }
@@ -202,6 +257,63 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
     saveAnswer("");
   }
 
+  function toggleVoiceInput() {
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceStatus(ui.voiceUnsupported);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang === "es" ? "es-ES" : "en-US";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceStatus(ui.voiceListening);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript || "")
+        .join(" ")
+        .trim();
+
+      if (transcript) {
+        setTextValues((prevValues) => {
+          const previousText = prevValues[q.id] || "";
+          const separator = previousText.trim() ? " " : "";
+          const nextValue = `${previousText}${separator}${transcript}`;
+          return {
+            ...prevValues,
+            [q.id]: q.maxLength ? nextValue.slice(0, q.maxLength) : nextValue,
+          };
+        });
+        setVoiceStatus(ui.voiceAdded);
+      }
+    };
+
+    recognition.onerror = () => {
+      setVoiceStatus(ui.voiceUnsupported);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }
+
   function goBack() {
     if (current === 0) {
       onBack();
@@ -210,54 +322,77 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
     }
   }
 
-  if (!q) return null;
+  if (!q || !stepInfo) return null;
 
   return (
     <div style={{ padding: "24px 24px 36px", maxWidth: 520, margin: "0 auto" }}>
-      <div style={{ marginBottom: 6 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 8,
-          }}
-        >
-          <span style={{ fontSize: 12, color: COLORS.textLight, fontWeight: 500 }}>
-            {ui.question(current + 1, total)}
-          </span>
-          <span style={{ fontSize: 12, color: COLORS.teal, fontWeight: 600 }}>
-            {progress}%
-          </span>
-        </div>
+      {q.section !== "transition" && (
+        <>
+          <div style={{ marginBottom: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, color: COLORS.textLight, fontWeight: 500 }}>
+                {stepInfo.label}
+              </span>
+              <span style={{ fontSize: 12, color: COLORS.teal, fontWeight: 600 }}>
+                {stepInfo.progress}%
+              </span>
+            </div>
 
-        <div style={{ background: COLORS.borderLight, borderRadius: 99, height: 5 }}>
+            <div style={{ background: COLORS.borderLight, borderRadius: 99, height: 5 }}>
+              <div
+                style={{
+                  width: `${stepInfo.progress}%`,
+                  height: 5,
+                  background: COLORS.teal,
+                  borderRadius: 99,
+                  transition: "width 0.4s ease",
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 6, marginBottom: 28, marginTop: 12 }}>
+            {Array.from({ length: stepInfo.segments }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: 3,
+                  borderRadius: 99,
+                  background: i <= stepInfo.activeSegment ? COLORS.teal : COLORS.borderLight,
+                  transition: "background 0.3s",
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {q.section === "transition" && (
+        <div style={{ marginBottom: 18 }}>
           <div
             style={{
-              width: `${progress}%`,
-              height: 5,
-              background: COLORS.teal,
+              display: "inline-block",
+              background: COLORS.tealLight,
+              color: COLORS.tealDark,
               borderRadius: 99,
-              transition: "width 0.4s ease",
+              padding: "5px 12px",
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: "0.2px",
             }}
-          />
+          >
+            {stepInfo.label}
+          </div>
         </div>
-      </div>
-
-      <div style={{ display: "flex", gap: 6, marginBottom: 28, marginTop: 12 }}>
-        {visibleQuestions.map((_, i) => (
-          <div
-            key={i}
-            style={{
-              flex: 1,
-              height: 3,
-              borderRadius: 99,
-              background: i <= current ? COLORS.teal : COLORS.borderLight,
-              transition: "background 0.3s",
-            }}
-          />
-        ))}
-      </div>
+      )}
 
       <div
         style={{
@@ -274,7 +409,7 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
       >
         <p
           style={{
-            fontSize: 17,
+            fontSize: q.section === "transition" ? 18 : 17,
             fontWeight: 600,
             color: COLORS.text,
             lineHeight: 1.55,
@@ -284,7 +419,7 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
           {q.text}
         </p>
 
-        {q.type === "binary" && (
+        {(q.type === "binary" || q.type === "additional_prompt") && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button
               onClick={() => saveAnswer(true)}
@@ -361,27 +496,9 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
                 alignItems: "center",
               }}
             >
-              <div
-                style={{
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#2E7D4F",
-                }}
-              />
-              <div
-                style={{
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#B7600A",
-                }}
-              />
-              <div
-                style={{
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#C0392B",
-                }}
-              />
+              <div style={{ height: 8, borderRadius: 999, background: "#2E7D4F" }} />
+              <div style={{ height: 8, borderRadius: 999, background: "#B7600A" }} />
+              <div style={{ height: 8, borderRadius: 999, background: "#C0392B" }} />
             </div>
           </div>
         )}
@@ -393,7 +510,10 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
               onChange={(e) => {
                 const nextValue = e.target.value;
                 if (!q.maxLength || nextValue.length <= q.maxLength) {
-                  setTextValue(nextValue);
+                  setTextValues((prevValues) => ({
+                    ...prevValues,
+                    [q.id]: nextValue,
+                  }));
                 }
               }}
               placeholder={
@@ -414,28 +534,50 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
               }}
             />
 
-            <div
-              style={{
-                fontSize: 12,
-                color: COLORS.textLight,
-                textAlign: "right",
-              }}
-            >
-              {textValue.length}/{q.maxLength || 500}
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <button
+                type="button"
+                onClick={toggleVoiceInput}
+                {...getAnimatedButtonHandlers("medium")}
+                style={{
+                  ...getActionButtonStyle(),
+                  flex: "1 1 auto",
+                }}
+              >
+                {isListening ? ui.voiceStop : ui.voiceStart}
+              </button>
+
+              <div
+                style={{
+                  fontSize: 12,
+                  color: COLORS.textLight,
+                  textAlign: "right",
+                  alignSelf: "center",
+                  minWidth: 70,
+                }}
+              >
+                {textValue.length}/{q.maxLength || 500}
+              </div>
             </div>
 
+            {voiceStatus && (
+              <p style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5, margin: 0 }}>
+                {voiceStatus}
+              </p>
+            )}
+
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <button
-  onClick={handleTextContinue}
-  {...getAnimatedButtonHandlers("medium")}
-  style={{
-    ...getActionButtonStyle({ primary: true }),
-    transition: "transform 0.18s ease, box-shadow 0.18s ease",
-    willChange: "transform, box-shadow",
-  }}
->
-  {isLast ? (lang === "es" ? "Ver resultado" : "See result") : ui.next}
-</button>
+              <button
+                onClick={handleTextContinue}
+                {...getAnimatedButtonHandlers("medium")}
+                style={{
+                  ...getActionButtonStyle({ primary: true }),
+                  transition: "transform 0.18s ease, box-shadow 0.18s ease",
+                  willChange: "transform, box-shadow",
+                }}
+              >
+                {isLast ? (lang === "es" ? "Ver resultado" : "See result") : ui.next}
+              </button>
 
               <button
                 onClick={handleSkipText}
