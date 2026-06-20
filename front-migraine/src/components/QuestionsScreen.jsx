@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { COLORS } from "../styles/colors";
 import { QUESTIONS } from "../data/questions";
 import { UI } from "../data/uiText";
+import { transcribeAudio } from "../services/diagnosisApi";
 
 const BUTTON_TRANSITION = "transform 0.18s ease, box-shadow 0.18s ease";
+const MAX_RECORDING_MS = 60_000;
 
 function getButtonAnimation(level = "medium") {
   if (level === "soft") {
@@ -185,7 +187,13 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
   const [textValues, setTextValues] = useState({});
   const [voiceStatus, setVoiceStatus] = useState("");
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimeoutRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   const visibleQuestions = useMemo(
     () => getVisibleQuestions(allQuestions, answers),
@@ -198,10 +206,17 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
   const textValue = q?.type === "text" ? textValues[q.id] || "" : "";
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
+      isMountedRef.current = false;
+      if (recordingTimeoutRef.current) {
+        window.clearTimeout(recordingTimeoutRef.current);
       }
+      if (mediaRecorderRef.current?.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
 
@@ -257,64 +272,134 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
     saveAnswer("");
   }
 
-  function toggleVoiceInput() {
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
+  function stopRecording() {
+    if (recordingTimeoutRef.current) {
+      window.clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.requestData();
+      mediaRecorderRef.current.stop();
+    }
+  }
+
+  async function toggleVoiceInput() {
+    if (lang !== "en") {
+      setVoiceStatus(ui.voiceEnglishOnly);
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (isListening) {
+      stopRecording();
+      return;
+    }
 
-    if (!SpeechRecognition) {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       setVoiceStatus(ui.voiceUnsupported);
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = lang === "es" ? "es-ES" : "en-US";
-    recognition.interimResults = false;
-    recognition.continuous = false;
+    try {
+      setIsRequestingPermission(true);
+      setVoiceStatus(ui.voicePermissionRequest);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setIsRequestingPermission(false);
+      const preferredMimeTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/mp4",
+      ];
+      const mimeType = preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
-    recognition.onstart = () => {
+      mediaStreamRef.current = stream;
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        if (recordingTimeoutRef.current) {
+          window.clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
+        stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+
+        if (!isMountedRef.current) return;
+
+        setIsListening(false);
+
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
+        audioChunksRef.current = [];
+
+        if (!audioBlob.size) {
+          setVoiceStatus(ui.voiceEmpty);
+          return;
+        }
+
+        setIsTranscribing(true);
+        setVoiceStatus(ui.voiceProcessing);
+
+        try {
+          const result = await transcribeAudio(audioBlob, lang);
+          const transcript = result.transcript?.trim();
+
+          if (!transcript) {
+            setVoiceStatus(ui.voiceEmpty);
+            return;
+          }
+
+          setTextValues((prevValues) => {
+            const previousText = prevValues[q.id] || "";
+            const separator = previousText.trim() ? " " : "";
+            const nextValue = `${previousText}${separator}${transcript}`;
+            return {
+              ...prevValues,
+              [q.id]: q.maxLength ? nextValue.slice(0, q.maxLength) : nextValue,
+            };
+          });
+          setVoiceStatus(ui.voiceAdded);
+        } catch (error) {
+          console.error("Deepgram transcription error:", error);
+          setVoiceStatus(ui.voiceError);
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      recorder.onerror = () => {
+        stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        setIsListening(false);
+        setVoiceStatus(ui.voiceError);
+      };
+
+      recorder.start(1_000);
       setIsListening(true);
       setVoiceStatus(ui.voiceListening);
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0]?.transcript || "")
-        .join(" ")
-        .trim();
-
-      if (transcript) {
-        setTextValues((prevValues) => {
-          const previousText = prevValues[q.id] || "";
-          const separator = previousText.trim() ? " " : "";
-          const nextValue = `${previousText}${separator}${transcript}`;
-          return {
-            ...prevValues,
-            [q.id]: q.maxLength ? nextValue.slice(0, q.maxLength) : nextValue,
-          };
-        });
-        setVoiceStatus(ui.voiceAdded);
-      }
-    };
-
-    recognition.onerror = () => {
-      setVoiceStatus(ui.voiceUnsupported);
+      recordingTimeoutRef.current = window.setTimeout(stopRecording, MAX_RECORDING_MS);
+    } catch (error) {
+      console.error("Microphone access error:", error);
+      setVoiceStatus(ui.voicePermissionDenied);
       setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
+      setIsRequestingPermission(false);
+    }
   }
 
   function goBack() {
+    if (isListening || isTranscribing) return;
+
     if (current === 0) {
       onBack();
     } else {
@@ -518,8 +603,8 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
               }}
               placeholder={
                 lang === "es"
-                  ? "Podés agregar información extra para el médico..."
-                  : "You can add any extra information for the doctor..."
+                  ? "Solo datos ficticios. No incluyas nombres ni información real..."
+                  : "Fictitious data only. Do not include real names or personal information..."
               }
               style={{
                 minHeight: 120,
@@ -538,13 +623,27 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
               <button
                 type="button"
                 onClick={toggleVoiceInput}
+                disabled={isTranscribing || isRequestingPermission || lang !== "en"}
                 {...getAnimatedButtonHandlers("medium")}
                 style={{
                   ...getActionButtonStyle(),
                   flex: "1 1 auto",
+                  opacity: isTranscribing || isRequestingPermission || lang !== "en" ? 0.65 : 1,
+                  cursor:
+                    isTranscribing || isRequestingPermission
+                      ? "wait"
+                      : lang !== "en"
+                      ? "not-allowed"
+                      : "pointer",
                 }}
               >
-                {isListening ? ui.voiceStop : ui.voiceStart}
+                {isTranscribing
+                  ? ui.voiceProcessing
+                  : isRequestingPermission
+                  ? ui.voicePermissionRequest
+                  : isListening
+                  ? ui.voiceStop
+                  : ui.voiceStart}
               </button>
 
               <div
@@ -566,14 +665,23 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
               </p>
             )}
 
+            {lang !== "en" && !voiceStatus && (
+              <p style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5, margin: 0 }}>
+                {ui.voiceEnglishOnly}
+              </p>
+            )}
+
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
                 onClick={handleTextContinue}
+                disabled={isListening || isTranscribing}
                 {...getAnimatedButtonHandlers("medium")}
                 style={{
                   ...getActionButtonStyle({ primary: true }),
                   transition: "transform 0.18s ease, box-shadow 0.18s ease",
                   willChange: "transform, box-shadow",
+                  opacity: isListening || isTranscribing ? 0.65 : 1,
+                  cursor: isListening || isTranscribing ? "not-allowed" : "pointer",
                 }}
               >
                 {isLast ? (lang === "es" ? "Ver resultado" : "See result") : ui.next}
@@ -581,8 +689,13 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
 
               <button
                 onClick={handleSkipText}
+                disabled={isListening || isTranscribing}
                 {...getAnimatedButtonHandlers("medium")}
-                style={getActionButtonStyle()}
+                style={{
+                  ...getActionButtonStyle(),
+                  opacity: isListening || isTranscribing ? 0.65 : 1,
+                  cursor: isListening || isTranscribing ? "not-allowed" : "pointer",
+                }}
               >
                 {lang === "es" ? "Omitir" : "Skip"}
               </button>
@@ -594,8 +707,13 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
       <div style={{ display: "flex", gap: 10 }}>
         <button
           onClick={goBack}
+          disabled={isListening || isTranscribing}
           {...getAnimatedButtonHandlers("medium")}
-          style={getBackButtonStyle()}
+          style={{
+            ...getBackButtonStyle(),
+            opacity: isListening || isTranscribing ? 0.65 : 1,
+            cursor: isListening || isTranscribing ? "not-allowed" : "pointer",
+          }}
         >
           ← {ui.back}
         </button>

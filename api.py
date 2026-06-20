@@ -1,9 +1,83 @@
+import json
+import os
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from tree_builder import build_tree
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+
+DEFAULT_FRONTEND_ORIGINS = (
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+)
+ALLOWED_FRONTEND_ORIGINS = tuple(
+    origin.strip()
+    for origin in os.environ.get(
+        "FRONTEND_ORIGINS",
+        ",".join(DEFAULT_FRONTEND_ORIGINS)
+    ).split(",")
+    if origin.strip()
+)
+
+CORS(
+    app,
+    resources={
+        r"/diagnose": {
+            "origins": ALLOWED_FRONTEND_ORIGINS,
+            "methods": ["POST", "OPTIONS"],
+            "allow_headers": ["Content-Type"]
+        },
+        r"/transcribe": {
+            "origins": ALLOWED_FRONTEND_ORIGINS,
+            "methods": ["POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "X-Language"]
+        }
+    }
+)
+
+DEEPGRAM_API_URL = "https://api.deepgram.com/v1/listen"
+MAX_AUDIO_BYTES = 10 * 1024 * 1024
+
+
+def transcribe_with_deepgram(audio_bytes, content_type):
+    api_key = os.environ.get("DEEPGRAM_API_KEY")
+    if not api_key:
+        raise RuntimeError("DEEPGRAM_API_KEY is not configured")
+
+    query = urlencode({
+        "model": "nova-3",
+        "language": "en-US",
+        "smart_format": "true"
+    })
+    deepgram_request = Request(
+        f"{DEEPGRAM_API_URL}?{query}",
+        data=audio_bytes,
+        headers={
+            "Authorization": f"Token {api_key}",
+            "Content-Type": content_type
+        },
+        method="POST"
+    )
+
+    with urlopen(deepgram_request, timeout=45) as response:
+        result = json.loads(response.read().decode("utf-8"))
+
+    channels = result.get("results", {}).get("channels", [])
+    alternatives = channels[0].get("alternatives", []) if channels else []
+    transcript = alternatives[0].get("transcript", "").strip() if alternatives else ""
+    confidence = alternatives[0].get("confidence") if alternatives else None
+
+    return {
+        "transcript": transcript,
+        "confidence": confidence,
+        "model": "nova-3",
+        "language": "en-US"
+    }
+
 
 def normalize_side(side_value):
     if not isinstance(side_value, str):
@@ -135,6 +209,69 @@ def get_diagnosis_label(diagnosis_key, language="en"):
     return labels.get(language, labels["en"]).get(diagnosis_key, diagnosis_key)
 
 
+@app.route("/transcribe", methods=["POST", "OPTIONS"])
+def transcribe():
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
+
+    if not os.environ.get("DEEPGRAM_API_KEY"):
+        return jsonify({
+            "error": "Audio transcription is not configured"
+        }), 503
+
+    content_type = (request.content_type or "").split(";")[0].strip().lower()
+    if not content_type.startswith("audio/"):
+        return jsonify({
+            "error": "Request body must contain audio"
+        }), 415
+
+    content_length = request.content_length
+    if content_length and content_length > MAX_AUDIO_BYTES:
+        return jsonify({
+            "error": "Audio file is too large"
+        }), 413
+
+    audio_bytes = request.get_data(cache=False)
+    if not audio_bytes:
+        return jsonify({
+            "error": "Audio body is empty"
+        }), 400
+
+    if len(audio_bytes) > MAX_AUDIO_BYTES:
+        return jsonify({
+            "error": "Audio file is too large"
+        }), 413
+
+    language = request.headers.get("X-Language", "en")
+    if language != "en":
+        return jsonify({
+            "error": "Audio transcription is available only in English for this demo"
+        }), 400
+
+    try:
+        return jsonify(
+            transcribe_with_deepgram(audio_bytes, content_type)
+        ), 200
+    except HTTPError as error:
+        app.logger.warning(
+            "Deepgram transcription failed with status %s",
+            error.code
+        )
+        return jsonify({
+            "error": "The audio transcription service rejected the request"
+        }), 502
+    except (URLError, TimeoutError):
+        app.logger.warning("Deepgram transcription service is unavailable")
+        return jsonify({
+            "error": "The audio transcription service is unavailable"
+        }), 503
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+        app.logger.warning("Deepgram returned an invalid transcription response")
+        return jsonify({
+            "error": "The audio transcription response was invalid"
+        }), 502
+
+
 @app.route("/diagnose", methods=["POST", "OPTIONS"])
 def diagnose():
     if request.method == "OPTIONS":
@@ -225,4 +362,9 @@ def home():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False,
+        use_reloader=False
+    )

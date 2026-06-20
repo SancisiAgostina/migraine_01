@@ -19,8 +19,7 @@ export default function App() {
   async function handleComplete(ans) {
     try {
       const result = await sendAnswersToBackend(ans, lang);
-console.log("API RESULT:", result);
-setApiResult(result);
+      setApiResult(result);
     } catch (error) {
       console.error("Backend error:", error);
       setApiResult({ diagnosis_key: "dx_inconclusive" });
@@ -49,6 +48,23 @@ setApiResult(result);
       />
 
       <Header />
+
+      <div
+        role="note"
+        style={{
+          maxWidth: 720,
+          margin: "14px auto 0",
+          padding: "10px 16px",
+          color: COLORS.textMuted,
+          fontSize: 12,
+          lineHeight: 1.5,
+          textAlign: "center",
+        }}
+      >
+        Demo only — use fictitious information. Do not enter real patient data.
+        <br />
+        Solo demostración — usá información ficticia. No ingreses datos reales de pacientes.
+      </div>
 
       {screen === "lang" && <LanguageScreen onSelect={handleLangSelect} />}
 

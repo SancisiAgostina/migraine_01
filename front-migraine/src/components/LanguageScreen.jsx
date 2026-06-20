@@ -3,6 +3,8 @@ import { COLORS } from "../styles/colors";
 
 export default function LanguageScreen({ onSelect }) {
   const [selected, setSelected] = useState(null);
+  const [confirmedDemoData, setConfirmedDemoData] = useState(false);
+  const canContinue = Boolean(selected && confirmedDemoData);
 
   const langs = [
     { id: "en", flag: "🇺🇸", label: "English", native: "English" },
@@ -97,11 +99,41 @@ export default function LanguageScreen({ onSelect }) {
         ))}
       </div>
 
+      <label
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          marginBottom: 18,
+          padding: "12px 14px",
+          background: COLORS.white,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 12,
+          color: COLORS.textMuted,
+          fontSize: 12,
+          lineHeight: 1.5,
+          cursor: "pointer",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={confirmedDemoData}
+          onChange={(event) => setConfirmedDemoData(event.target.checked)}
+          style={{ marginTop: 2 }}
+        />
+        <span>
+          I confirm that I will use fictitious information only and will not enter real patient
+          data.
+          <br />
+          Confirmo que usaré solo información ficticia y no ingresaré datos reales de pacientes.
+        </span>
+      </label>
+
       <button
-  disabled={!selected}
+  disabled={!canContinue}
   onClick={() => onSelect(selected)}
   onMouseEnter={(e) => {
-    if (!selected) return;
+    if (!canContinue) return;
     e.currentTarget.style.transform = "scale(1.02)";
     e.currentTarget.style.boxShadow = "0 8px 18px rgba(0,0,0,0.08)";
   }}
@@ -110,25 +142,25 @@ export default function LanguageScreen({ onSelect }) {
     e.currentTarget.style.boxShadow = "none";
   }}
   onMouseDown={(e) => {
-    if (!selected) return;
+    if (!canContinue) return;
     e.currentTarget.style.transform = "scale(0.98)";
     e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)";
   }}
   onMouseUp={(e) => {
-    if (!selected) return;
+    if (!canContinue) return;
     e.currentTarget.style.transform = "scale(1.02)";
     e.currentTarget.style.boxShadow = "0 8px 18px rgba(0,0,0,0.08)";
   }}
   style={{
     width: "100%",
     padding: "15px",
-    background: selected ? COLORS.teal : COLORS.tealMid,
+    background: canContinue ? COLORS.teal : COLORS.tealMid,
     color: "#fff",
     border: "none",
     borderRadius: 12,
     fontSize: 16,
     fontWeight: 600,
-    cursor: selected ? "pointer" : "default",
+    cursor: canContinue ? "pointer" : "default",
     transition: "transform 0.18s ease, box-shadow 0.18s ease, background 0.15s ease",
     letterSpacing: "0.2px",
     willChange: "transform, box-shadow",

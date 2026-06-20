@@ -2,6 +2,9 @@
 
 This project is a bilingual migraine screening application designed to help organize headache-related symptoms before a medical consultation.
 
+> Demo safety: use fictitious information only. Do not enter real patient
+> names, identifiers, medical records, audio, or other personal information.
+
 The app uses decision-tree based logic to guide the user through a structured set of questions and generate a screening result. It is not intended to provide a medical diagnosis, but rather to support symptom organization and improve communication between patients and healthcare professionals.
 
 ## Current workflow updates
@@ -99,6 +102,30 @@ Returns a basic confirmation message that the API is running.
 
 POST /diagnose
 Receives the user's answers and returns a screening result.
+
+POST /transcribe
+Receives browser-recorded audio and returns a Deepgram Nova-3 transcript. The
+Deepgram API key is read only by the Flask backend and is never sent to the
+browser.
+
+### Deepgram setup
+
+Configure the API key in the terminal that starts Flask:
+
+```bash
+export DEEPGRAM_API_KEY="your_deepgram_api_key"
+.venv/bin/python api.py
+```
+
+Then start the React app from `front-migraine` as usual. For this demo, voice
+transcription is available only when English is selected and Nova-3 is fixed to
+`en-US`. Audio recording stops automatically after 60 seconds and the
+transcript is appended to the optional patient note.
+
+Both development servers bind only to the local computer. Flask accepts browser
+requests only from `http://127.0.0.1:5173` and `http://localhost:5173` by
+default. Additional origins must be explicitly configured with
+`FRONTEND_ORIGINS`; do not expose the development servers to a public network.
 
 ### Current Development Progress
 

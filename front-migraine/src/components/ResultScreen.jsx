@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { COLORS } from "../styles/colors";
 import { UI } from "../data/uiText";
+import RedFlagsChecklist from "./RedFlagsChecklist";
 
 function DoctorPanel({ lang, doctorView }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -134,6 +135,8 @@ function DoctorPanel({ lang, doctorView }) {
 
       {isOpen && (
         <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 16 }}>
+          <RedFlagsChecklist />
+
           <div>
             <p
               style={{
