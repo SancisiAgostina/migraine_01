@@ -178,7 +178,12 @@ function getStepInfo(q, visibleQuestions, current, ui) {
   };
 }
 
-export default function QuestionsScreen({ lang, simplified = false, onComplete, onBack }) {
+export default function QuestionsScreen({
+  lang,
+  simplified = false,
+  onComplete,
+  onBack,
+}) {
   const ui = UI[lang];
   const allQuestions = simplified
     ? QUESTIONS[lang].filter((question) => question.section === "lipton")
@@ -271,10 +276,6 @@ export default function QuestionsScreen({ lang, simplified = false, onComplete, 
     }
 
     saveAnswer(finalText);
-  }
-
-  function handleSkipText() {
-    saveAnswer("");
   }
 
   function stopRecording() {
@@ -377,7 +378,7 @@ export default function QuestionsScreen({ lang, simplified = false, onComplete, 
           setVoiceStatus(ui.voiceAdded);
         } catch (error) {
           console.error("Deepgram transcription error:", error);
-          setVoiceStatus(ui.voiceError);
+          setVoiceStatus(error.message || ui.voiceError);
         } finally {
           setIsTranscribing(false);
         }
@@ -676,35 +677,24 @@ export default function QuestionsScreen({ lang, simplified = false, onComplete, 
               </p>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <button
-                onClick={handleTextContinue}
-                disabled={isListening || isTranscribing}
-                {...getAnimatedButtonHandlers("medium")}
-                style={{
-                  ...getActionButtonStyle({ primary: true }),
-                  transition: "transform 0.18s ease, box-shadow 0.18s ease",
-                  willChange: "transform, box-shadow",
-                  opacity: isListening || isTranscribing ? 0.65 : 1,
-                  cursor: isListening || isTranscribing ? "not-allowed" : "pointer",
-                }}
-              >
-                {isLast ? (lang === "es" ? "Ver resultado" : "See result") : ui.next}
-              </button>
-
-              <button
-                onClick={handleSkipText}
-                disabled={isListening || isTranscribing}
-                {...getAnimatedButtonHandlers("medium")}
-                style={{
-                  ...getActionButtonStyle(),
-                  opacity: isListening || isTranscribing ? 0.65 : 1,
-                  cursor: isListening || isTranscribing ? "not-allowed" : "pointer",
-                }}
-              >
-                {lang === "es" ? "Omitir" : "Skip"}
-              </button>
-            </div>
+            <button
+              onClick={handleTextContinue}
+              disabled={isListening || isTranscribing}
+              {...getAnimatedButtonHandlers("medium")}
+              style={{
+                ...getActionButtonStyle({ primary: true }),
+                transition: "transform 0.18s ease, box-shadow 0.18s ease",
+                willChange: "transform, box-shadow",
+                opacity: isListening || isTranscribing ? 0.65 : 1,
+                cursor: isListening || isTranscribing ? "not-allowed" : "pointer",
+              }}
+            >
+              {isLast
+                ? lang === "es"
+                  ? "Terminar cuestionario"
+                  : "Finish Questionnaire"
+                : ui.next}
+            </button>
           </div>
         )}
       </div>

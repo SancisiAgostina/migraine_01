@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Header from "./components/Header";
 import RoleScreen from "./components/RoleScreen";
-import QuestionsScreen from "./components/QuestionsScreen";
+import AdvancedPatientFlow from "./components/AdvancedPatientFlow";
 import ThankYouScreen from "./components/ThankYouScreen";
 import PhysicianView from "./components/PhysicianView";
 import { COLORS } from "./styles/colors";
@@ -65,9 +65,8 @@ export default function App() {
       {screen === "role" && <RoleScreen onSelect={handleRoleSelect} />}
 
       {screen === "questions" && (
-        <QuestionsScreen
+        <AdvancedPatientFlow
           lang={lang}
-          simplified
           onComplete={handleComplete}
           onBack={() => setScreen("role")}
         />

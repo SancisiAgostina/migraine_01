@@ -14,12 +14,18 @@ function buildScreeningSummary(score) {
 
 export function saveLatestPatientSubmission(allAnswers) {
   const answers = Object.fromEntries(
-    LIPTON_QUESTION_IDS.map((questionId) => [
-      questionId,
-      allAnswers[questionId] === true,
-    ])
+    Object.entries(allAnswers).filter(
+      ([, value]) => typeof value === "boolean" || typeof value === "string"
+    )
   );
-  const liptonScore = Object.values(answers).filter(Boolean).length;
+
+  for (const questionId of LIPTON_QUESTION_IDS) {
+    answers[questionId] = allAnswers[questionId] === true;
+  }
+
+  const liptonScore = LIPTON_QUESTION_IDS.filter(
+    (questionId) => answers[questionId]
+  ).length;
 
   const submission = {
     submittedAt: new Date().toISOString(),

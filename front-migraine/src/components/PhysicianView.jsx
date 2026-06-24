@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { COLORS } from "../styles/colors";
 import { QUESTIONS } from "../data/questions";
+import { UI } from "../data/uiText";
 import {
   getLatestPatientSubmission,
   LIPTON_QUESTION_IDS,
@@ -11,9 +12,31 @@ import TreatmentRecommendations from "./TreatmentRecommendations";
 export default function PhysicianView({ onBack }) {
   const [submission] = useState(getLatestPatientSubmission);
   const [showTreatment, setShowTreatment] = useState(false);
+  const symptomLabels = UI.en.symptomLabels;
   const liptonQuestions = QUESTIONS.en.filter((question) =>
     LIPTON_QUESTION_IDS.includes(question.id)
   );
+  const completedAdditionalQuestions =
+    submission?.answers?.wants_additional_questions === true;
+  const additionalNotes = submission?.answers?.additional_notes?.trim();
+  const additionalSummaryEntries = submission
+    ? Object.entries(submission.answers).filter(([key, value]) => {
+        if (
+          LIPTON_QUESTION_IDS.includes(key) ||
+          key === "wants_additional_questions" ||
+          key === "additional_notes" ||
+          key === "assessment_mode"
+        ) {
+          return false;
+        }
+
+        if (value === false || value === undefined || value === null || value === "") {
+          return false;
+        }
+
+        return typeof value === "boolean" || typeof value === "string";
+      })
+    : [];
 
   const formattedTimestamp = submission
     ? new Intl.DateTimeFormat("en-US", {
@@ -47,7 +70,7 @@ export default function PhysicianView({ onBack }) {
             marginBottom: 6,
           }}
         >
-          Physician view
+          Healthcare Provider View
         </p>
 
         <h1
@@ -203,6 +226,102 @@ export default function PhysicianView({ onBack }) {
           </>
         )}
       </section>
+
+      {completedAdditionalQuestions && (
+        <section
+          aria-labelledby="clinical-summary-title"
+          style={{
+            background: COLORS.white,
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 18,
+            padding: "22px",
+            marginBottom: 18,
+          }}
+        >
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: COLORS.teal,
+              letterSpacing: "0.8px",
+              textTransform: "uppercase",
+              marginBottom: 6,
+            }}
+          >
+            Detailed patient questionnaire
+          </p>
+
+          <h2
+            id="clinical-summary-title"
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: COLORS.text,
+              lineHeight: 1.35,
+              marginBottom: 14,
+            }}
+          >
+            Clinical Summary
+          </h2>
+
+          {additionalSummaryEntries.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {additionalSummaryEntries.map(([key, value]) => (
+                <span
+                  key={key}
+                  style={{
+                    background: COLORS.bg,
+                    color: COLORS.text,
+                    borderRadius: 8,
+                    padding: "6px 11px",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    border: `1px solid ${COLORS.border}`,
+                  }}
+                >
+                  {typeof value === "boolean"
+                    ? symptomLabels[key] || key
+                    : `${symptomLabels[key] || key}: ${String(value)}`}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6 }}>
+              No additional positive symptoms were reported.
+            </p>
+          )}
+
+          {additionalNotes && (
+            <div style={{ marginTop: 18 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: COLORS.text,
+                  marginBottom: 8,
+                }}
+              >
+                Patient Notes / Voice Transcript
+              </p>
+
+              <div
+                style={{
+                  background: COLORS.bg,
+                  border: `1px solid ${COLORS.border}`,
+                  borderRadius: 12,
+                  padding: "14px 16px",
+                  fontSize: 14,
+                  color: COLORS.text,
+                  lineHeight: 1.6,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {additionalNotes}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {submission?.liptonPositive && (
         <RedFlagsChecklist onSeeTreatment={() => setShowTreatment(true)} />

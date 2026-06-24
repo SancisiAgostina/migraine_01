@@ -43,6 +43,12 @@ export async function transcribeAudio(audioBlob, lang) {
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    if (response.status === 503 && result.error === "Audio transcription is not configured") {
+      throw new Error(
+        "Voice transcription is not configured. Add DEEPGRAM_API_KEY to the backend .env file and restart the backend."
+      );
+    }
+
     throw new Error(result.error || "Failed to transcribe audio");
   }
 

@@ -9,15 +9,15 @@ The app uses decision-tree based logic to guide the user through a structured se
 
 ## Simplified demo workflow
 
-- The app opens directly on a Patient or Physician view selector.
-- The Patient flow asks only the three Lipton / ID Migraine screening questions.
-- After the third Patient question, the app shows a neutral submission confirmation.
+- The app opens directly on a Patient or Healthcare Provider view selector.
+- The Patient flow starts with the three Lipton / ID Migraine screening questions and then asks whether the patient wants to continue into the detailed headache questionnaire.
+- After the detailed questionnaire, the app shows a neutral submission confirmation.
 - The Patient flow does not show diagnoses, clinical interpretations, migraine types, tension-type headache results, or inconclusive results.
-- The Physician option opens the standalone physician safety review directly.
-- For demo purposes, the latest Patient submission is stored in the browser's local storage and displayed in the Physician view.
-- Migraine-specific physician content is shown only when at least two of the three Lipton responses are positive.
-- Treatment recommendations are available only after the physician confirms that all headache red flags are absent.
-- The advanced questionnaire files remain in the project for the separate full version, but are not part of either simplified flow.
+- The Healthcare Provider option opens the standalone clinical safety review directly.
+- For demo purposes, the latest Patient submission is stored in the browser's local storage and displayed in the Healthcare Provider view.
+- Migraine-specific provider content is shown only when at least two of the three Lipton responses are positive.
+- Treatment recommendations are available only after the healthcare provider confirms that all headache red flags are absent.
+- The advanced questionnaire is reused for the Patient flow without reintroducing language selection.
 
 ## Main Goal
 
@@ -27,20 +27,20 @@ The application focuses on:
 
 - Improving the user experience for patients.
 - Organizing relevant symptom information.
-- Providing a clearer physician-oriented summary.
+- Providing a clearer healthcare-provider-oriented summary.
 - Keeping the simplified demo focused and English-only.
 - Building a maintainable structure for future improvements.
 
 ## Main Features
 
-- Patient and physician entry views.
+- Patient and healthcare provider entry views.
 - Three-question Patient screening flow.
-- Standalone Physician safety review.
+- Standalone Healthcare Provider safety review.
 - Decision-tree based screening logic.
 - Conditional question flow based on previous answers.
 - Free-text notes for additional symptom context.
 - Clearer result presentation for patients.
-- More clinically relevant summary for physicians.
+- More clinically relevant summary for healthcare providers.
 - Responsive front-end interface.
 - React front end connected to a Flask backend API.
 
@@ -113,14 +113,15 @@ browser.
 
 ### Deepgram setup
 
-Configure the API key in the terminal that starts Flask:
+Create a local `.env` file beside `api.py`:
 
-```bash
-export DEEPGRAM_API_KEY="your_deepgram_api_key"
-.venv/bin/python api.py
+```env
+DEEPGRAM_API_KEY=your_deepgram_api_key
 ```
 
-Then start the React app from `front-migraine` as usual. For this demo, voice
+The Flask backend loads this file automatically when it starts. The key remains
+server-side and the `.env` file is ignored by Git. Then start the React app from
+`front-migraine` as usual. For this demo, voice
 transcription is available only when English is selected and Nova-3 is fixed to
 `en-US`. Audio recording stops automatically after 60 seconds and the
 transcript is appended to the optional patient note.
@@ -138,7 +139,7 @@ Reorganized the front-end code into clearer sections.
 Separated components, data, UI text, services, and styles.
 Improved the question flow.
 Added conditional visibility logic for questions.
-Improved the separation between patient and physician result views.
+Improved the separation between patient and healthcare provider result views.
 Refined the user interface, spacing, layout, and button behavior.
 Improved bilingual text organization.
 Tested the connection between the React front end and the Flask backend.
@@ -158,7 +159,7 @@ Future Improvements
 
 Adding more detailed internal comments.
 Improving the README as the project evolves.
-Refining the physician summary.
+Refining the healthcare provider summary.
 Improving the free-text notes section.
 Exploring chatbot-based support to extract useful symptom information from patient notes.
 Adding stronger input validation.

@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -7,6 +8,27 @@ from urllib.request import Request, urlopen
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from tree_builder import build_tree
+
+
+def load_local_environment():
+    env_path = Path(__file__).with_name(".env")
+    if not env_path.is_file():
+        return
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("\"'")
+
+        if key:
+            os.environ.setdefault(key, value)
+
+
+load_local_environment()
 
 app = Flask(__name__)
 

@@ -11,7 +11,7 @@ import {
 
 const TEXT = {
   title: "Headache Red Flags",
-  subtitle: "Physician Safety Check",
+  subtitle: "Healthcare Provider Safety Check",
   instruction: "Select any red flag symptoms that are present, or confirm that all are absent.",
   confirmAll: "All headache red flags are absent.",
   allAbsent: "All headache red flags have been confirmed absent.",

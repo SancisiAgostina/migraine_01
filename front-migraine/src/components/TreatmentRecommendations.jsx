@@ -1,25 +1,12 @@
+import { useState } from "react";
 import { COLORS } from "../styles/colors";
-
-const triptans = [
-  "Sumatriptan (Imitrex): Available in oral, nasal spray, and subcutaneous injection forms. Start at 50 mg.",
-  "Rizatriptan (Maxalt): Available in both standard oral tablets and orally disintegrating tablets, which dissolve on the tongue without water. Start at 5 mg.",
-  "Eletriptan (Relpax): Start at 40 mg.",
-  "Zolmitriptan (Zomig): Available as a tablet, orally disintegrating tablet, or nasal spray. Start at 2.5 mg.",
-  "Almotriptan (Axert): Start at 6.25 mg.",
-  "Naratriptan (Amerge): Start at 2.5 mg.",
-  "Frovatriptan (Frova): Start at 2.5 mg.",
-];
-
-const thirdLineTherapies = [
-  "Rimegepant (Nurtec ODT): Orally disintegrating tablet. Start at 75 mg.",
-  "Ubrogepant (Ubrelvy): Start at 50 mg.",
-  "Atogepant (Qulipta): Start at 30 mg.",
-];
-
-const prophylacticMedications = [
-  "Topamax: Start at 25 mg at night and increase by 25 mg weekly until target dose of 50–100 mg twice a day is reached.",
-  "Depakote ER: Start at 500 mg at night and then increase after 1 week to 1000 mg daily. This can be divided as 500 mg twice daily.",
-];
+import {
+  INITIAL_THERAPIES,
+  PROPHYLACTIC_MEDICATIONS,
+  shouldShowNeurologyNextStep,
+  THIRD_LINE_THERAPIES,
+  TRIPTANS,
+} from "./treatmentRecommendationsData";
 
 function RecommendationSection({ title, children }) {
   return (
@@ -46,27 +33,125 @@ function RecommendationSection({ title, children }) {
   );
 }
 
-function MedicationList({ items }) {
+function TreatmentCheckboxList({ items, selectedTreatments, onChange }) {
   return (
-    <ul
-      style={{
-        margin: 0,
-        paddingLeft: 22,
-        color: COLORS.text,
-        fontSize: 14,
-        lineHeight: 1.65,
-      }}
-    >
-      {items.map((item) => (
-        <li key={item} style={{ marginBottom: 8 }}>
-          {item}
-        </li>
-      ))}
-    </ul>
+    <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+      {items.map((item) => {
+        const checked = Boolean(selectedTreatments[item.id]);
+
+        return (
+          <label
+            key={item.id}
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              padding: "11px 12px",
+              background: checked ? COLORS.tealLight : COLORS.bg,
+              border: `1px solid ${checked ? COLORS.teal : COLORS.borderLight}`,
+              borderRadius: 10,
+              color: COLORS.text,
+              cursor: "pointer",
+              fontSize: 14,
+              lineHeight: 1.55,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(event) => onChange(item.id, event.target.checked)}
+              style={{
+                width: 17,
+                height: 17,
+                marginTop: 2,
+                flexShrink: 0,
+                accentColor: COLORS.teal,
+              }}
+            />
+            <span>{item.label}</span>
+          </label>
+        );
+      })}
+    </div>
   );
 }
 
 export default function TreatmentRecommendations({ onBack }) {
+  const [selectedTreatments, setSelectedTreatments] = useState({});
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [reviewCompleted, setReviewCompleted] = useState(false);
+  const showNextStep = shouldShowNeurologyNextStep(selectedTreatments);
+
+  function updateTreatment(id, checked) {
+    setSelectedTreatments((current) => ({
+      ...current,
+      [id]: checked,
+    }));
+  }
+
+  if (reviewCompleted) {
+    return (
+      <main style={{ padding: "36px 24px 40px", maxWidth: 620, margin: "0 auto" }}>
+        <section
+          role="status"
+          style={{
+            background: COLORS.white,
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 18,
+            padding: "32px 24px",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 58,
+              height: 58,
+              margin: "0 auto 18px",
+              borderRadius: "50%",
+              background: COLORS.greenBg,
+              color: COLORS.green,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 26,
+              fontWeight: 700,
+            }}
+          >
+            ✓
+          </div>
+          <h1
+            style={{
+              color: COLORS.text,
+              fontSize: 21,
+              lineHeight: 1.4,
+              marginBottom: 10,
+            }}
+          >
+            Healthcare provider review completed.
+          </h1>
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              width: "100%",
+              marginTop: 18,
+              padding: "14px",
+              background: COLORS.white,
+              border: `1.5px solid ${COLORS.teal}`,
+              borderRadius: 12,
+              color: COLORS.teal,
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            ← Back to healthcare provider review
+          </button>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main style={{ padding: "24px 24px 40px", maxWidth: 720, margin: "0 auto" }}>
       <div
@@ -88,17 +173,29 @@ export default function TreatmentRecommendations({ onBack }) {
             marginBottom: 6,
           }}
         >
-          Physician view
+          Healthcare Provider View
         </p>
         <h1 style={{ color: COLORS.text, fontSize: 22, lineHeight: 1.35 }}>
           Headache Treatment Recommendations
         </h1>
+        <p
+          style={{
+            color: COLORS.textMuted,
+            fontSize: 14,
+            lineHeight: 1.6,
+            marginTop: 10,
+          }}
+        >
+          Select any treatments the patient has already tried.
+        </p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <RecommendationSection title="Initial Therapies (Over-the-counter medications)">
-          <MedicationList
-            items={["Ibuprofen", "Acetaminophen", "Naproxen", "Excedrin Migraine"]}
+          <TreatmentCheckboxList
+            items={INITIAL_THERAPIES}
+            selectedTreatments={selectedTreatments}
+            onChange={updateTreatment}
           />
         </RecommendationSection>
 
@@ -106,11 +203,19 @@ export default function TreatmentRecommendations({ onBack }) {
           <h3 style={{ color: COLORS.tealDark, fontSize: 15, marginBottom: 10 }}>
             Triptans
           </h3>
-          <MedicationList items={triptans} />
+          <TreatmentCheckboxList
+            items={TRIPTANS}
+            selectedTreatments={selectedTreatments}
+            onChange={updateTreatment}
+          />
         </RecommendationSection>
 
         <RecommendationSection title="Third Line Therapies">
-          <MedicationList items={thirdLineTherapies} />
+          <TreatmentCheckboxList
+            items={THIRD_LINE_THERAPIES}
+            selectedTreatments={selectedTreatments}
+            onChange={updateTreatment}
+          />
         </RecommendationSection>
 
         <RecommendationSection title="Prophylactic Medications">
@@ -124,42 +229,84 @@ export default function TreatmentRecommendations({ onBack }) {
           >
             Consider when more than 1 headache per week on average.
           </p>
-          <MedicationList items={prophylacticMedications} />
+          <TreatmentCheckboxList
+            items={PROPHYLACTIC_MEDICATIONS}
+            selectedTreatments={selectedTreatments}
+            onChange={updateTreatment}
+          />
         </RecommendationSection>
 
-        <section
-          style={{
-            background: COLORS.tealLight,
-            border: `1px solid ${COLORS.teal}`,
-            borderRadius: 16,
-            padding: "18px 20px",
-          }}
-        >
-          <h2 style={{ color: COLORS.tealDark, fontSize: 16, marginBottom: 8 }}>
-            Next step
-          </h2>
-          <p style={{ color: COLORS.text, fontSize: 14, lineHeight: 1.6 }}>
-            Referral to Neurology for Botulinum toxin injections and consideration of CGRP
-            inhibitors.
-          </p>
-        </section>
+        {showNextStep && (
+          <section
+            style={{
+              background: COLORS.tealLight,
+              border: `1px solid ${COLORS.teal}`,
+              borderRadius: 16,
+              padding: "18px 20px",
+            }}
+          >
+            <h2 style={{ color: COLORS.tealDark, fontSize: 16, marginBottom: 8 }}>
+              Next step
+            </h2>
+            <p style={{ color: COLORS.text, fontSize: 14, lineHeight: 1.6 }}>
+              Referral to Neurology for Botulinum toxin injections and consideration of CGRP
+              inhibitors.
+            </p>
+          </section>
+        )}
 
-        <div
-          role="note"
+        <label
           style={{
-            background: COLORS.bg,
-            border: `1px solid ${COLORS.border}`,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            background: acknowledged ? COLORS.tealLight : COLORS.bg,
+            border: `1.5px solid ${acknowledged ? COLORS.teal : COLORS.border}`,
             borderRadius: 12,
             padding: "14px 16px",
-            color: COLORS.textMuted,
-            fontSize: 12,
+            color: COLORS.text,
+            fontSize: 13,
             lineHeight: 1.6,
-            textAlign: "center",
+            cursor: "pointer",
           }}
         >
-          This application is intended to support clinical decision-making and does not replace
-          evaluation, diagnosis, or treatment by a licensed physician.
-        </div>
+          <input
+            type="checkbox"
+            required
+            checked={acknowledged}
+            onChange={(event) => setAcknowledged(event.target.checked)}
+            style={{
+              width: 17,
+              height: 17,
+              marginTop: 2,
+              flexShrink: 0,
+              accentColor: COLORS.teal,
+            }}
+          />
+          <span>
+            I acknowledge that this application supports clinical decision-making and does not
+            replace evaluation, diagnosis, or treatment by a licensed healthcare provider.
+          </span>
+        </label>
+
+        <button
+          type="button"
+          disabled={!acknowledged}
+          onClick={() => setReviewCompleted(true)}
+          style={{
+            width: "100%",
+            padding: "14px",
+            background: acknowledged ? COLORS.teal : COLORS.tealMid,
+            border: "none",
+            borderRadius: 12,
+            color: COLORS.white,
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: acknowledged ? "pointer" : "not-allowed",
+          }}
+        >
+          Complete Review
+        </button>
       </div>
 
       <button
@@ -178,7 +325,7 @@ export default function TreatmentRecommendations({ onBack }) {
           cursor: "pointer",
         }}
       >
-        ← Back to physician review
+        ← Back to healthcare provider review
       </button>
     </main>
   );

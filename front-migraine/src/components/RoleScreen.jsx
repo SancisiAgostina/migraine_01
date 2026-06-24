@@ -4,7 +4,7 @@ const roles = [
   {
     id: "patient",
     label: "Patient",
-    description: "Complete the short migraine screening questionnaire.",
+    description: "Complete the migraine screening and detailed headache questionnaire.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
         <circle cx="14" cy="9" r="4" stroke="currentColor" strokeWidth="2" />
@@ -19,8 +19,8 @@ const roles = [
   },
   {
     id: "physician",
-    label: "Physician",
-    description: "Open the physician clinical safety review.",
+    label: "Healthcare Provider",
+    description: "Open the healthcare provider clinical safety review.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
         <path
