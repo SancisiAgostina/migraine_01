@@ -178,9 +178,11 @@ function getStepInfo(q, visibleQuestions, current, ui) {
   };
 }
 
-export default function QuestionsScreen({ lang, onComplete, onBack }) {
+export default function QuestionsScreen({ lang, simplified = false, onComplete, onBack }) {
   const ui = UI[lang];
-  const allQuestions = QUESTIONS[lang];
+  const allQuestions = simplified
+    ? QUESTIONS[lang].filter((question) => question.section === "lipton")
+    : QUESTIONS[lang];
 
   const [answers, setAnswers] = useState({});
   const [current, setCurrent] = useState(0);
@@ -252,7 +254,10 @@ export default function QuestionsScreen({ lang, onComplete, onBack }) {
     setAnswers(updatedAnswers);
 
     if (isLast) {
-      completeWithAnswers(updatedAnswers, updatedAnswers.assessment_mode || "complete");
+      completeWithAnswers(
+        updatedAnswers,
+        simplified ? "basic_lipton" : updatedAnswers.assessment_mode || "complete"
+      );
     } else {
       setCurrent((prev) => prev + 1);
     }

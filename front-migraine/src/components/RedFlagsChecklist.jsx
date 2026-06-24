@@ -1,45 +1,43 @@
 import { useState } from "react";
 import { COLORS } from "../styles/colors";
+import {
+  canShowTreatmentRecommendations,
+  createInitialRedFlagsState,
+  hasSelectedRedFlags,
+  RED_FLAG_ITEMS,
+  setAllRedFlagsAbsent,
+  setRedFlagItem,
+} from "./redFlagsState";
 
-// Kept local for now so this component can move independently.
-// This object can later be moved into the shared translation files.
 const TEXT = {
   title: "Headache Red Flags",
   subtitle: "Physician Safety Check",
-  instruction: "Please confirm that NONE of the following are present in your patient.",
-  confirmAll: "Confirm all are absent",
-  allAbsent: "No headache red flags were confirmed by the physician.",
-  incomplete:
-    "Red flags have not been fully excluded. Imaging or further medical evaluation may be required to exclude serious illness.",
-  items: [
-    "No abnormal neurological examination (e.g., papilledema, altered mental status)",
-    "No signs of systemic illness (e.g., fever, stiff neck, rash)",
-    "Not the worst headache ever",
-    "No progression in frequency and severity of headaches",
-    "No new headache in a patient older than 50 years",
-    "No sudden onset of headache – “thunderclap headache”",
-    "No new-onset headache in an immunocompromised or cancer patient",
-    "No headache after head trauma",
-    "No headache worsening with Valsalva",
-    "No headache accompanied by “whooshing” sounds",
-  ],
+  instruction: "Select any red flag symptoms that are present, or confirm that all are absent.",
+  confirmAll: "All headache red flags are absent.",
+  allAbsent: "All headache red flags have been confirmed absent.",
+  incomplete: "Red flags have not been fully excluded. Complete the safety check before continuing.",
+  warning:
+    "Red flag symptoms are present. Imaging or further urgent evaluation is required before considering migraine-specific treatment recommendations.",
 };
 
-export default function RedFlagsChecklist() {
-  const [checkedItems, setCheckedItems] = useState(() => TEXT.items.map(() => false));
-  const allAbsent = checkedItems.every(Boolean);
+export default function RedFlagsChecklist({ onSeeTreatment }) {
+  const [state, setState] = useState(createInitialRedFlagsState);
+  const anyRedFlagSelected = hasSelectedRedFlags(state);
+  const treatmentAllowed = canShowTreatmentRecommendations(state);
 
-  function toggleItem(index) {
-    setCheckedItems((currentItems) =>
-      currentItems.map((isChecked, itemIndex) =>
-        itemIndex === index ? !isChecked : isChecked
-      )
-    );
+  function handleItemChange(index, checked) {
+    setState((currentState) => setRedFlagItem(currentState, index, checked));
   }
 
-  function toggleAllAbsent() {
-    setCheckedItems(TEXT.items.map(() => !allAbsent));
+  function handleAllAbsentChange(checked) {
+    setState((currentState) => setAllRedFlagsAbsent(currentState, checked));
   }
+
+  const alertColors = anyRedFlagSelected
+    ? { background: COLORS.redBg, border: COLORS.red, text: COLORS.red }
+    : state.allAbsent
+      ? { background: COLORS.greenBg, border: COLORS.green, text: COLORS.green }
+      : { background: COLORS.amberBg, border: COLORS.amber, text: COLORS.amber };
 
   return (
     <section
@@ -94,10 +92,10 @@ export default function RedFlagsChecklist() {
           gap: 10,
           marginBottom: 14,
           padding: "11px 12px",
-          background: allAbsent ? COLORS.greenBg : COLORS.white,
-          border: `1.5px solid ${allAbsent ? COLORS.green : COLORS.teal}`,
+          background: state.allAbsent ? COLORS.greenBg : COLORS.white,
+          border: `1.5px solid ${state.allAbsent ? COLORS.green : COLORS.teal}`,
           borderRadius: 10,
-          color: allAbsent ? COLORS.green : COLORS.tealDark,
+          color: state.allAbsent ? COLORS.green : COLORS.tealDark,
           cursor: "pointer",
           fontSize: 13,
           fontWeight: 700,
@@ -105,8 +103,8 @@ export default function RedFlagsChecklist() {
       >
         <input
           type="checkbox"
-          checked={allAbsent}
-          onChange={toggleAllAbsent}
+          checked={state.allAbsent}
+          onChange={(event) => handleAllAbsentChange(event.target.checked)}
           aria-label={TEXT.confirmAll}
           style={{ width: 17, height: 17, accentColor: COLORS.green }}
         />
@@ -114,7 +112,7 @@ export default function RedFlagsChecklist() {
       </label>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-        {TEXT.items.map((item, index) => (
+        {RED_FLAG_ITEMS.map((item, index) => (
           <label
             key={item}
             style={{
@@ -122,25 +120,29 @@ export default function RedFlagsChecklist() {
               alignItems: "flex-start",
               gap: 10,
               padding: "10px 11px",
-              background: COLORS.white,
-              border: `1px solid ${checkedItems[index] ? COLORS.tealMid : COLORS.borderLight}`,
+              background: state.allAbsent ? COLORS.borderLight : COLORS.white,
+              border: `1px solid ${
+                state.selectedItems[index] ? COLORS.red : COLORS.borderLight
+              }`,
               borderRadius: 9,
-              color: COLORS.text,
-              cursor: "pointer",
+              color: state.allAbsent ? COLORS.textLight : COLORS.text,
+              cursor: state.allAbsent ? "not-allowed" : "pointer",
               fontSize: 13,
               lineHeight: 1.45,
+              opacity: state.allAbsent ? 0.7 : 1,
             }}
           >
             <input
               type="checkbox"
-              checked={checkedItems[index]}
-              onChange={() => toggleItem(index)}
+              checked={state.selectedItems[index]}
+              disabled={state.allAbsent}
+              onChange={(event) => handleItemChange(index, event.target.checked)}
               style={{
                 width: 16,
                 height: 16,
                 marginTop: 2,
                 flexShrink: 0,
-                accentColor: COLORS.teal,
+                accentColor: COLORS.red,
               }}
             />
             <span>{item}</span>
@@ -154,17 +156,42 @@ export default function RedFlagsChecklist() {
         style={{
           marginTop: 15,
           padding: "11px 12px",
-          background: allAbsent ? COLORS.greenBg : COLORS.amberBg,
-          border: `1px solid ${allAbsent ? COLORS.green : COLORS.amber}`,
+          background: alertColors.background,
+          border: `1px solid ${alertColors.border}`,
           borderRadius: 10,
-          color: allAbsent ? COLORS.green : COLORS.amber,
+          color: alertColors.text,
           fontSize: 13,
           fontWeight: 600,
           lineHeight: 1.5,
         }}
       >
-        {allAbsent ? TEXT.allAbsent : TEXT.incomplete}
+        {anyRedFlagSelected
+          ? TEXT.warning
+          : state.allAbsent
+            ? TEXT.allAbsent
+            : TEXT.incomplete}
       </div>
+
+      {treatmentAllowed && (
+        <button
+          type="button"
+          onClick={onSeeTreatment}
+          style={{
+            width: "100%",
+            marginTop: 15,
+            padding: "14px",
+            background: COLORS.teal,
+            border: "none",
+            borderRadius: 12,
+            color: COLORS.white,
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          See Headache Treatment Recommendations
+        </button>
+      )}
     </section>
   );
 }

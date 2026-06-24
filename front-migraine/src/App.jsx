@@ -1,37 +1,35 @@
 import { useState } from "react";
 import Header from "./components/Header";
-import LanguageScreen from "./components/LanguageScreen";
+import RoleScreen from "./components/RoleScreen";
 import QuestionsScreen from "./components/QuestionsScreen";
-import ResultScreen from "./components/ResultScreen";
+import ThankYouScreen from "./components/ThankYouScreen";
+import PhysicianView from "./components/PhysicianView";
 import { COLORS } from "./styles/colors";
 import { sendAnswersToBackend } from "./services/diagnosisApi";
+import { saveLatestPatientSubmission } from "./services/patientSubmissionStorage";
 
 export default function App() {
-  const [screen, setScreen] = useState("lang");
-  const [lang, setLang] = useState("en");
-  const [apiResult, setApiResult] = useState(null);
+  const [screen, setScreen] = useState("role");
+  const lang = "en";
 
-  function handleLangSelect(selectedLang) {
-    setLang(selectedLang);
-    setScreen("questions");
+  function handleRoleSelect(selectedRole) {
+    setScreen(selectedRole === "patient" ? "questions" : "physician");
   }
 
   async function handleComplete(ans) {
+    saveLatestPatientSubmission(ans);
+
     try {
-      const result = await sendAnswersToBackend(ans, lang);
-      setApiResult(result);
+      await sendAnswersToBackend(ans, lang);
     } catch (error) {
       console.error("Backend error:", error);
-      setApiResult({ diagnosis_key: "dx_inconclusive" });
     }
 
-    setScreen("result");
+    setScreen("thank-you");
   }
 
   function handleRestart() {
-    setApiResult(null);
-    setLang("en");
-    setScreen("lang");
+    setScreen("role");
   }
 
   return (
@@ -62,27 +60,22 @@ export default function App() {
         }}
       >
         Demo only — use fictitious information. Do not enter real patient data.
-        <br />
-        Solo demostración — usá información ficticia. No ingreses datos reales de pacientes.
       </div>
 
-      {screen === "lang" && <LanguageScreen onSelect={handleLangSelect} />}
+      {screen === "role" && <RoleScreen onSelect={handleRoleSelect} />}
 
       {screen === "questions" && (
         <QuestionsScreen
           lang={lang}
+          simplified
           onComplete={handleComplete}
-          onBack={() => setScreen("lang")}
+          onBack={() => setScreen("role")}
         />
       )}
 
-{screen === "result" && (
-  <ResultScreen
-    lang={lang}
-    apiResult={apiResult}
-    onRestart={handleRestart}
-  />
-)}
+      {screen === "thank-you" && <ThankYouScreen onRestart={handleRestart} />}
+
+      {screen === "physician" && <PhysicianView onBack={handleRestart} />}
     </div>
   );
 }

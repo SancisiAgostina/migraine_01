@@ -1,21 +1,23 @@
 # Migraine Screening App
 
-This project is a bilingual migraine screening application designed to help organize headache-related symptoms before a medical consultation.
+This branch contains the simplified, English-only migraine screening demo.
 
 > Demo safety: use fictitious information only. Do not enter real patient
 > names, identifiers, medical records, audio, or other personal information.
 
 The app uses decision-tree based logic to guide the user through a structured set of questions and generate a screening result. It is not intended to provide a medical diagnosis, but rather to support symptom organization and improve communication between patients and healthcare professionals.
 
-## Current workflow updates
+## Simplified demo workflow
 
-- The first three Lipton / ID Migraine screening questions are required.
-- After the first three questions, the patient can choose whether to answer additional questions for a more complete physician review.
-- If the patient declines additional questions, the backend returns a basic Lipton-only result for the physician view.
-- Patient-facing results stay neutral and do not display diagnosis labels.
-- Diagnostic details are reserved for the physician view.
-- The final notes field supports typed notes and optional browser-based voice input when available. Audio files are not stored.
-- A safe chatbot integration plan is documented in `docs/chatbot-plan.md`.
+- The app opens directly on a Patient or Physician view selector.
+- The Patient flow asks only the three Lipton / ID Migraine screening questions.
+- After the third Patient question, the app shows a neutral submission confirmation.
+- The Patient flow does not show diagnoses, clinical interpretations, migraine types, tension-type headache results, or inconclusive results.
+- The Physician option opens the standalone physician safety review directly.
+- For demo purposes, the latest Patient submission is stored in the browser's local storage and displayed in the Physician view.
+- Migraine-specific physician content is shown only when at least two of the three Lipton responses are positive.
+- Treatment recommendations are available only after the physician confirms that all headache red flags are absent.
+- The advanced questionnaire files remain in the project for the separate full version, but are not part of either simplified flow.
 
 ## Main Goal
 
@@ -26,13 +28,14 @@ The application focuses on:
 - Improving the user experience for patients.
 - Organizing relevant symptom information.
 - Providing a clearer physician-oriented summary.
-- Supporting both English and Spanish users.
+- Keeping the simplified demo focused and English-only.
 - Building a maintainable structure for future improvements.
 
 ## Main Features
 
-- Bilingual interface: English and Spanish.
-- Patient and physician result views.
+- Patient and physician entry views.
+- Three-question Patient screening flow.
+- Standalone Physician safety review.
 - Decision-tree based screening logic.
 - Conditional question flow based on previous answers.
 - Free-text notes for additional symptom context.
