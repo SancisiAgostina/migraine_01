@@ -55,5 +55,9 @@ export const PROPHYLACTIC_MEDICATIONS = [
 ];
 
 export function shouldShowNeurologyNextStep(selectedTreatments) {
-  return Boolean(selectedTreatments.topamax && selectedTreatments.depakote_er);
+  const selectedProphylacticCount = PROPHYLACTIC_MEDICATIONS.filter(
+    ({ id }) => selectedTreatments[id]
+  ).length;
+
+  return selectedProphylacticCount >= 2;
 }
