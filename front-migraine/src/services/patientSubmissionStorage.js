@@ -8,8 +8,8 @@ export const LIPTON_QUESTION_IDS = [
 
 function buildScreeningSummary(score) {
   return score >= 2
-    ? `Positive Lipton screener (${score} of 3 responses positive).`
-    : `Negative Lipton screener (${score} of 3 responses positive).`;
+    ? `Positive ID Migraine screener (${score} of 3 responses positive).`
+    : `Negative ID Migraine screener (${score} of 3 responses positive).`;
 }
 
 export function saveLatestPatientSubmission(allAnswers) {

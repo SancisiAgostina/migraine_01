@@ -88,7 +88,7 @@ export default function PhysicianView({ onBack }) {
         <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6 }}>
           {submission?.liptonPositive
             ? "Review the patient submission and headache red flags before continuing with clinical evaluation."
-            : "Review the latest patient Lipton screening submission."}
+            : "Review the latest patient ID Migraine screening submission."}
         </p>
       </div>
 
@@ -208,7 +208,7 @@ export default function PhysicianView({ onBack }) {
               }}
             >
               <div>
-                Lipton Screener: {submission.liptonPositive ? "Positive" : "Negative"}
+                ID Migraine Screener: {submission.liptonPositive ? "Positive" : "Negative"}
               </div>
               <div>Yes responses: {submission.liptonScore}/3</div>
             </div>
@@ -342,7 +342,7 @@ export default function PhysicianView({ onBack }) {
             lineHeight: 1.6,
           }}
         >
-          This patient’s responses do not meet the Lipton screening threshold for likely migraine.
+          This patient’s responses do not meet the ID Migraine screening threshold for likely migraine.
         </section>
       )}
 

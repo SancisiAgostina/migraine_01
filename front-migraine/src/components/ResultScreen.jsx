@@ -189,7 +189,7 @@ function DoctorPanel({ lang, doctorView }) {
                 marginBottom: 8,
               }}
             >
-              {doctorLang === "es" ? "Screening Lipton" : "Lipton screening"}
+              {doctorLang === "es" ? "Screening ID Migraine" : "ID Migraine screening"}
             </p>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

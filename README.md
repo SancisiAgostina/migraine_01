@@ -10,12 +10,12 @@ The app uses decision-tree based logic to guide the user through a structured se
 ## Simplified demo workflow
 
 - The app opens directly on a Patient or Healthcare Provider view selector.
-- The Patient flow starts with the three Lipton / ID Migraine screening questions and then asks whether the patient wants to continue into the detailed headache questionnaire.
+- The Patient flow starts with the three ID Migraine screening questions and then asks whether the patient wants to continue into the detailed headache questionnaire.
 - After the detailed questionnaire, the app shows a neutral submission confirmation.
 - The Patient flow does not show diagnoses, clinical interpretations, migraine types, tension-type headache results, or inconclusive results.
 - The Healthcare Provider option opens the standalone clinical safety review directly.
 - For demo purposes, the latest Patient submission is stored in the browser's local storage and displayed in the Healthcare Provider view.
-- Migraine-specific provider content is shown only when at least two of the three Lipton responses are positive.
+- Migraine-specific provider content is shown only when at least two of the three ID Migraine responses are positive.
 - Treatment recommendations are available only after the healthcare provider confirms that all headache red flags are absent.
 - The advanced questionnaire is reused for the Patient flow without reintroducing language selection.
 
