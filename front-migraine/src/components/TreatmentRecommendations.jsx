@@ -186,7 +186,7 @@ export default function TreatmentRecommendations({ onBack }) {
             marginTop: 10,
           }}
         >
-          Select any treatments the patient has already tried.
+          Select any treatments you will prescribe today.
         </p>
       </div>
 
