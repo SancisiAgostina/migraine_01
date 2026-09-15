@@ -19,6 +19,28 @@ The app uses decision-tree based logic to guide the user through a structured se
 - Treatment recommendations are available only after the healthcare provider confirms that all headache red flags are absent.
 - The advanced questionnaire is reused for the Patient flow without reintroducing language selection.
 
+### Healthcare provider examination and documentation
+
+The provider view includes a Physical Examination checklist after the headache
+red-flag section, using the supplied examination template. “All normal” selects
+the 23 finding checkboxes; the bilateral reflex grade remains a separate numeric
+entry. Unchecked findings do not automatically mean abnormal. Additional findings
+can be recorded in the examination notes.
+
+The Assessment & Plan form provides editable history, clinician-selected assessment,
+neurological examination status, imaging plan, medication and dose, diary advice,
+follow-up and encounter time. Generate a draft, review/edit it, and copy it. No
+diagnosis, imaging decision, or AI-use attestation is inferred from the checklist.
+The form uses a local text template, not an AI service. Changing the form after
+generation requires regenerating before copying; regeneration replaces draft edits.
+
+Examination, red-flag and A+P entries survive navigation to and from treatment
+recommendations during the same provider review. They are not persisted after a
+reload or after leaving the provider review, and are not sent to the backend.
+
+Provider logic checks: `cd front-migraine` then
+`node --test tests/providerExam.test.mjs`.
+
 ## Main Goal
 
 The main goal of this project is to create a clear, accessible, and clinically useful screening support tool for migraine and tension-type headache symptoms.

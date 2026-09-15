@@ -20,8 +20,10 @@ const TEXT = {
     "Red flag symptoms are present. Imaging or further urgent evaluation is required before considering migraine-specific treatment recommendations.",
 };
 
-export default function RedFlagsChecklist({ onSeeTreatment }) {
-  const [state, setState] = useState(createInitialRedFlagsState);
+export default function RedFlagsChecklist({ onSeeTreatment, state: controlledState, setState: setControlledState }) {
+  const [localState, setLocalState] = useState(createInitialRedFlagsState);
+  const state = controlledState ?? localState;
+  const setState = setControlledState ?? setLocalState;
   const anyRedFlagSelected = hasSelectedRedFlags(state);
   const treatmentAllowed = canShowTreatmentRecommendations(state);
 

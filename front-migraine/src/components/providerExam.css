@@ -1,0 +1,35 @@
+.provider-exam {
+  margin-top: 18px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #c8e4e2;
+  border-radius: 18px;
+  color: #0f2b2a;
+}
+.provider-exam h2 { margin: 0 0 10px; font-size: 18px; }
+.exam-eyebrow { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: #007a72; }
+.exam-help { margin: 0 0 14px; font-size: 13px; line-height: 1.6; color: #4a6b69; }
+.exam-count { margin: 0 0 16px; font-size: 12px; color: #4a6b69; }
+.exam-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.exam-group { min-width: 0; margin: 0; padding: 12px; border: 1px solid #e0f0ee; border-radius: 10px; }
+.exam-group legend { padding: 0 5px; font-weight: 700; font-size: 14px; }
+.exam-check { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 14px; line-height: 1.5; cursor: pointer; }
+.exam-check input { flex-shrink: 0; width: 17px; height: 17px; margin-top: 2px; accent-color: #007a72; }
+.exam-all { padding: 12px; margin: 16px 0 8px; border: 1px solid #b0ddd9; border-radius: 10px; font-weight: 700; }
+.exam-neuro { margin: 22px 0 12px; font-size: 16px; color: #007a72; }
+.exam-reflexes { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+.exam-reflexes input { width: 65px; }
+.exam-field { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; font-size: 13px; font-weight: 600; }
+.provider-exam input:not([type="checkbox"]), .provider-exam textarea, .provider-exam select {
+  min-width: 0; padding: 10px; border: 1px solid #c8e4e2; border-radius: 8px; background: #fff; color: #0f2b2a; font: inherit;
+}
+.provider-exam textarea { width: 100%; box-sizing: border-box; resize: vertical; line-height: 1.6; font-weight: 400; }
+.provider-exam input:focus-visible, .provider-exam textarea:focus-visible, .provider-exam select:focus-visible { outline: 2px solid #007a72; outline-offset: 3px; }
+.exam-button { width: 100%; margin: 16px 0 8px; padding: 13px; border: 1px solid #007a72; border-radius: 10px; background: #007a72; color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.exam-button-secondary { background: #fff; color: #007a72; }
+.exam-button:disabled { opacity: .5; cursor: not-allowed; }
+.exam-button:focus-visible { outline: 2px solid #007a72; outline-offset: 3px; }
+@media (max-width: 480px) {
+  .provider-exam { padding: 18px 14px; }
+  .exam-grid { grid-template-columns: 1fr; }
+}

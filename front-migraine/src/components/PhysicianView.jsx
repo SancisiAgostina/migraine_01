@@ -8,10 +8,18 @@ import {
 } from "../services/patientSubmissionStorage";
 import RedFlagsChecklist from "./RedFlagsChecklist";
 import TreatmentRecommendations from "./TreatmentRecommendations";
+import PhysicalExamChecklist from "./PhysicalExamChecklist";
+import { createPhysicalExamState } from "./physicalExamState";
+import { createInitialRedFlagsState } from "./redFlagsState";
+import AssessmentPlan from "./AssessmentPlan";
+import { createAssessmentPlanState } from "./assessmentPlanState";
 
 export default function PhysicianView({ onBack }) {
   const [submission] = useState(getLatestPatientSubmission);
   const [showTreatment, setShowTreatment] = useState(false);
+  const [redFlags, setRedFlags] = useState(createInitialRedFlagsState);
+  const [physicalExam, setPhysicalExam] = useState(createPhysicalExamState);
+  const [assessmentPlan, setAssessmentPlan] = useState(() => createAssessmentPlanState(submission));
   const symptomLabels = UI.en.symptomLabels;
   const liptonQuestions = QUESTIONS.en.filter((question) =>
     LIPTON_QUESTION_IDS.includes(question.id)
@@ -324,8 +332,15 @@ export default function PhysicianView({ onBack }) {
       )}
 
       {submission?.liptonPositive && (
-        <RedFlagsChecklist onSeeTreatment={() => setShowTreatment(true)} />
+        <RedFlagsChecklist
+          state={redFlags}
+          setState={setRedFlags}
+          onSeeTreatment={() => setShowTreatment(true)}
+        />
       )}
+
+      <PhysicalExamChecklist state={physicalExam} onChange={setPhysicalExam} />
+      <AssessmentPlan state={assessmentPlan} onChange={setAssessmentPlan} />
 
       {submission && !submission.liptonPositive && (
         <section
