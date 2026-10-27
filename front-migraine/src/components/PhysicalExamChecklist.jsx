@@ -13,16 +13,21 @@ export default function PhysicalExamChecklist({ state, onChange }) {
         {group.reflexes && (
           <label className="exam-reflexes">
             <span>Reflexes</span>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              inputMode="numeric"
+            <select
               aria-label="Bilateral reflex grade"
-              placeholder="—"
               value={state.reflexes}
-              onChange={(event) => onChange((current) => ({ ...current, reflexes: event.target.value }))}
-            />
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value === "" || /^[1-4]$/.test(value)) {
+                  onChange((current) => ({ ...current, reflexes: value }));
+                }
+              }}
+            >
+              <option value="">—</option>
+              {[1, 2, 3, 4].map((grade) => (
+                <option key={grade} value={grade}>{grade}</option>
+              ))}
+            </select>
             <span>+ B</span>
           </label>
         )}

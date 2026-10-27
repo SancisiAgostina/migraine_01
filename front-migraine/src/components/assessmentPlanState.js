@@ -20,7 +20,7 @@ export function createAssessmentPlanState(submission) {
   });
   if (submission?.answers?.additional_notes?.trim()) history.push(`PATIENT NOTES\n${submission.answers.additional_notes.trim()}`);
   return {
-    age: "", sex: "", history: history.join("\n\n"),
+    age: "", sex: "", gender: "", history: history.join("\n\n"),
     consistency: "", diagnoses: {}, neurologicalExam: "", imaging: "", imagingType: "",
     medication: "", dose: "", diary: false, aiUsed: false,
     followUp: "", followUpUnit: "weeks", minutes: "", notes: "",
@@ -30,9 +30,17 @@ export function createAssessmentPlanState(submission) {
 
 export const DIAGNOSES = ["migraine", "migraine with aura", "tension headache"];
 
+export function setDiagnosis(diagnoses, diagnosis, checked) {
+  const next = { ...diagnoses, [diagnosis]: checked };
+  if (checked && diagnosis === "migraine") next["migraine with aura"] = false;
+  if (checked && diagnosis === "migraine with aura") next.migraine = false;
+  return next;
+}
+
 export function buildAssessmentPlan(state) {
   const parts = [];
-  const patient = [state.age ? `${state.age} year old` : "", state.sex].filter(Boolean).join(" ") || "Patient";
+  const gender = state.gender?.trim();
+  const patient = [state.age ? `${state.age} year old` : "", state.sex, gender ? `(gender: ${gender})` : ""].filter(Boolean).join(" ") || "Patient";
   parts.push(state.history.trim() ? `${patient} with the following reported history:\n\n${state.history.trim()}\n` : `${patient}. History not documented.`);
   const diagnoses = DIAGNOSES.filter((diagnosis) => state.diagnoses[diagnosis]);
   if (state.consistency && diagnoses.length) {
@@ -51,6 +59,7 @@ export function buildAssessmentPlan(state) {
 }
 
 export function getPlanValidation(state) {
+  if (state.diagnoses.migraine && state.diagnoses["migraine with aura"]) return "Select either migraine or migraine with aura, not both.";
   if (state.imaging === "obtain" && !state.imagingType.trim()) return "Enter the imaging type or change the imaging plan.";
   if (Boolean(state.medication.trim()) !== Boolean(state.dose.trim())) return "Enter both the medication and dose, or leave both blank.";
   if (Boolean(state.consistency) !== DIAGNOSES.some((diagnosis) => state.diagnoses[diagnosis])) return "Select both the symptom assessment and at least one diagnosis, or leave both blank.";

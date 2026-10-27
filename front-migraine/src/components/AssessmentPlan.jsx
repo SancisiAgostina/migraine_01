@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { buildAssessmentPlan, DIAGNOSES, getPlanValidation } from "./assessmentPlanState";
+import { buildAssessmentPlan, DIAGNOSES, getPlanValidation, setDiagnosis } from "./assessmentPlanState";
 import "./providerExam.css";
 
 export default function AssessmentPlan({ state, onChange }) {
@@ -48,9 +48,10 @@ export default function AssessmentPlan({ state, onChange }) {
       <p className="exam-eyebrow">Healthcare Provider Documentation</p>
       <h2 id="assessment-plan-title">Assessment &amp; Plan</h2>
       <p className="exam-help">Complete the assessment and plan, then generate a note to review and edit. Clinical decisions are entered by the healthcare provider.</p>
-      <div className="exam-grid">
+      <div className="exam-grid exam-demographics">
         {field("age", "Age (years)", { type: "number", min: 0, step: 1 })}
         {select("sex", "Sex", [["M", "M"], ["F", "F"]])}
+        {field("gender", "Gender", { placeholder: "Not documented" })}
       </div>
       <label className="exam-field">
         History summary
@@ -62,7 +63,11 @@ export default function AssessmentPlan({ state, onChange }) {
         <legend>Diagnosis considered</legend>
         {DIAGNOSES.map((diagnosis) => (
           <label className="exam-check" key={diagnosis}>
-            <input type="checkbox" checked={Boolean(state.diagnoses[diagnosis])} onChange={(event) => update("diagnoses", { ...state.diagnoses, [diagnosis]: event.target.checked })} />
+            <input type="checkbox" checked={Boolean(state.diagnoses[diagnosis])} onChange={(event) => {
+              const checked = event.target.checked;
+              setCopyStatus("");
+              onChange((current) => ({ ...current, diagnoses: setDiagnosis(current.diagnoses, diagnosis, checked) }));
+            }} />
             <span>{diagnosis[0].toUpperCase() + diagnosis.slice(1)}</span>
           </label>
         ))}

@@ -7,10 +7,10 @@ export const EXAM_GROUPS = [
   { title: "Ext", items: [["ext", "Neg C/C/E"]] },
   { title: "MS", neuro: true, items: [["ms", "intact"]] },
   { title: "CN", neuro: true, items: [["cn", "2-12 nl"], ["fundi", "Fundi sharp"], ["vfftc", "VFFTC"]] },
-  { title: "Motor", neuro: true, items: [["bulk", "Nl bulk, tone"], ["strength", "5/5 B"], ["drift", "Neg drift"]] },
-  { title: "Sensory", neuro: true, items: [["sensory", "Nl LT, temp, VS"]] },
+  { title: "Motor", neuro: true, items: [["motorNl", "Nl"], ["bulk", "bulk"], ["tone", "tone"], ["strength", "5/5 B"], ["drift", "Neg drift"]] },
+  { title: "Sensory", neuro: true, items: [["sensoryNl", "Nl"], ["sensoryLt", "LT"], ["sensoryTemp", "temp"], ["sensoryVs", "VS"]] },
   { title: "Refl", neuro: true, items: [["toes", "Toes down B"]], reflexes: true },
-  { title: "Gait/Coord", neuro: true, items: [["gait", "Narrow, neg Romberg"], ["tht", "Can T/H/T"], ["ffm", "Nl FFM"], ["fn", "Nl FN"], ["ram", "Nl RAM"]] },
+  { title: "Gait/Coord", neuro: true, items: [["gait", "Narrow"], ["romberg", "Neg Romberg"], ["tht", "Can T/H/T"], ["ffm", "Nl FFM"], ["fn", "Nl FN"], ["ram", "Nl RAM"]] },
 ];
 
 export const EXAM_ITEM_IDS = EXAM_GROUPS.flatMap(({ items }) => items.map(([id]) => id));
